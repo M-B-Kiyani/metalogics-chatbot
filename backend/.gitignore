@@ -1,0 +1,74 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables (NEVER commit these!)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+.env.development
+.env.test
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Testing
+coverage/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Prisma
+prisma/migrations/
+
+# Google Calendar credentials
+google-credentials.json
+metalogics-chatbot-*.json
+test-service-account.json
+*-service-account.json
+*-credentials.json
+
+# API Keys and secrets
+*api-key*
+*secret*
+*token*
+*password*
+config/secrets.json
+secrets/
+credentials/
+
+# Retell AI configuration
+retell-config.json
+retell-agent-*.json
+
+# HubSpot credentials
+hubspot-*.json
+
+# OAuth tokens
+*oauth*
+*refresh-token*
+*access-token*
+
+# Database credentials
+database.json
+db-config.json
+
+# SSL certificates
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx

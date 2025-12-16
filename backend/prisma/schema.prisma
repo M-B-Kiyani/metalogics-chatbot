@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Booking {
+  id                         String        @id @default(uuid())
+  name                       String
+  company                    String
+  email                      String
+  phone                      String?
+  inquiry                    String
+  startTime                  DateTime
+  duration                   Int
+  status                     BookingStatus @default(PENDING)
+  createdAt                  DateTime      @default(now())
+  updatedAt                  DateTime      @updatedAt
+  confirmationSent           Boolean       @default(false)
+  reminderSent               Boolean       @default(false)
+  calendarEventId            String?
+  crmContactId               String?
+  calendarSynced             Boolean       @default(false)
+  crmSynced                  Boolean       @default(false)
+  requiresManualCalendarSync Boolean       @default(false)
+  requiresManualCrmSync      Boolean       @default(false)
+
+  @@index([startTime])
+  @@index([status])
+  @@index([email])
+  @@index([calendarEventId])
+  @@index([crmContactId])
+  @@index([email, createdAt])
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}

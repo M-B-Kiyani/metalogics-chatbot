@@ -1,0 +1,115 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+*.local
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment variables (NEVER commit these!)
+.env
+.env.*
+.env.local
+.env.production
+.env.staging
+.env.development
+.env.test
+.env.example
+
+# Sensitive credentials and API keys
+google-credentials.json
+service-account-key.json
+metalogics-chatbot-*.json
+*-service-account.json
+*-credentials.json
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
+
+# API Keys and secrets
+*api-key*
+*secret*
+*token*
+*password*
+config/secrets.json
+secrets/
+credentials/
+
+# Retell AI configuration
+retell-config.json
+retell-agent-*.json
+
+# HubSpot credentials
+hubspot-*.json
+
+# OAuth tokens
+*oauth*
+*refresh-token*
+*access-token*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*~
+
+# OS files
+Thumbs.db
+.Spotlight-V100
+.Trashes
+
+# Testing
+coverage/
+.nyc_output/
+*.lcov
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Docker
+.dockerignore
+
+# Knowledge base (generated)
+public/knowledge-base.json
+
+# Backup files
+*.backup
+*.bak
+backups/
+
+# PM2
+.pm2/
+pids/
+*.pid
+*.seed
+*.pid.lock

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Website - Metalogics Chatbot Integration Example</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        line-height: 1.6;
+      }
+      h1 {
+        color: #333;
+      }
+      .content {
+        background: #f5f5f5;
+        padding: 30px;
+        border-radius: 10px;
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Welcome to My Website</h1>
+
+    <div class="content">
+      <h2>About Us</h2>
+      <p>
+        This is a sample website showing how to integrate the Metalogics Chatbot
+        widget.
+      </p>
+      <p>Look at the bottom-right corner - you'll see a chat button!</p>
+    </div>
+
+    <div class="content">
+      <h2>Our Services</h2>
+      <p>
+        We offer amazing services. Click the chat button to learn more or book a
+        consultation.
+      </p>
+    </div>
+
+    <!-- 
+    ============================================
+    METALOGICS CHATBOT INTEGRATION
+    ============================================
+    Just add these two lines before closing </body> tag
+  -->
+
+    <!-- Step 1: Include the CSS -->
+    <link rel="stylesheet" href="https://your-cdn.com/metalogics-chatbot.css" />
+
+    <!-- Step 2: Include the script with your configuration -->
+    <script
+      src="https://your-cdn.com/metalogics-chatbot.iife.js"
+      data-api-key="YOUR_API_KEY_HERE"
+      data-api-url="https://your-backend.com"
+      data-brand-color="#3b82f6"
+      data-position="bottom-right"
+    ></script>
+
+    <!-- 
+    That's it! The chatbot will automatically appear.
+    
+    Configuration options:
+    - data-api-key: Your API key (REQUIRED)
+    - data-api-url: Your backend URL (default: http://localhost:3000)
+    - data-brand-color: Your brand color in hex (default: #3b82f6)
+    - data-position: "bottom-right" or "bottom-left" (default: bottom-right)
+  --></body>
+</html>
