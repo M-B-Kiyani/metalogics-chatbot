@@ -178,11 +178,11 @@ const UnifiedChatWidget: React.FC<UnifiedChatWidgetProps> = ({ config }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${config.apiUrl}/api/chat`, {
+      const response = await fetch(`${config.apiUrl}/api/widget/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${config.apiKey}`,
+          "x-api-key": config.apiKey,
         },
         body: JSON.stringify({
           message: userInput,
@@ -234,12 +234,12 @@ const UnifiedChatWidget: React.FC<UnifiedChatWidgetProps> = ({ config }) => {
 
         // Get access token from backend
         const response = await fetch(
-          `${config.apiUrl}/api/retell/register-call`,
+          `${config.apiUrl}/api/widget/retell/register-call`,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${config.apiKey}`,
+              "x-api-key": config.apiKey,
             },
             body: JSON.stringify({
               agentId: config.retellAgentId,

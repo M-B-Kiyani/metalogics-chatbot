@@ -57,6 +57,7 @@ export interface EmailConfig {
 export interface AuthConfig {
   apiKey: string;
   apiKeyHeader: string;
+  widgetApiKey?: string;
 }
 
 /**
@@ -223,6 +224,7 @@ const envSchema = z.object({
   // Authentication
   API_KEY: z.string().min(32, "API_KEY must be at least 32 characters"),
   API_KEY_HEADER: z.string().default("Authorization"),
+  WIDGET_API_KEY: z.string().optional(),
 
   // Logging
   LOG_LEVEL: z.enum(["error", "warn", "info", "debug"]).default("info"),
@@ -253,9 +255,9 @@ const envSchema = z.object({
     .transform((val) => val === "true"),
 
   // CORS
-  ALLOWED_ORIGINS: z.string().default("http://localhost:5173"),
-  ALLOWED_METHODS: z.string().default("GET,POST,PUT,PATCH,DELETE"),
-  ALLOWED_HEADERS: z.string().default("Content-Type,Authorization"),
+  ALLOWED_ORIGINS: z.string().default("*"),
+  ALLOWED_METHODS: z.string().default("GET,POST,PUT,PATCH,DELETE,OPTIONS"),
+  ALLOWED_HEADERS: z.string().default("Content-Type,Authorization,x-api-key"),
   CORS_CREDENTIALS: z
     .string()
     .default("true")
@@ -422,6 +424,7 @@ function buildAuthConfig(): AuthConfig {
   return {
     apiKey: env.API_KEY,
     apiKeyHeader: env.API_KEY_HEADER,
+    widgetApiKey: env.WIDGET_API_KEY,
   };
 }
 

@@ -12,6 +12,7 @@ import {
 } from "./routes";
 import { RetellController } from "./controllers/retell.controller";
 import { createConversationRoutes } from "./routes/conversation.routes";
+import { createWidgetRoutes } from "./routes/widget.routes";
 import {
   errorHandler,
   corsMiddleware,
@@ -82,6 +83,17 @@ export const createApp = (
   );
   const conversationRoutes = createConversationRoutes(conversationController);
   const retellRoutes = createRetellRoutes(retellController);
+  const widgetRoutes = createWidgetRoutes(
+    conversationController,
+    retellController
+  );
+
+  // Root health endpoint for Railway
+  app.get("/health", (req: Request, res: Response) => {
+    res
+      .status(200)
+      .json({ status: "healthy", timestamp: new Date().toISOString() });
+  });
 
   // Mount routes with /api prefix
   // Note: More specific routes must come before general routes
@@ -91,6 +103,7 @@ export const createApp = (
   app.use("/api/docs", docsRoutes);
   app.use("/api/chat", conversationRoutes);
   app.use("/api/retell", retellRoutes);
+  app.use("/api/widget", widgetRoutes);
 
   logger.info("Routes mounted successfully", {
     bookingRoutes: "/api/bookings",
@@ -99,6 +112,7 @@ export const createApp = (
     docsRoutes: "/api/docs",
     chatRoutes: "/api/chat",
     retellRoutes: "/api/retell",
+    widgetRoutes: "/api/widget",
   });
 
   // ============================================

@@ -118,7 +118,8 @@ const VoiceButton: React.FC<VoiceButtonProps> = ({
       }
 
       const apiBaseUrl =
-        import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+        import.meta.env.VITE_API_BASE_URL ||
+        "https://latest-chatbot-production.up.railway.app";
 
       console.log("Registering call with backend...", { apiBaseUrl, agentId });
 

@@ -72,7 +72,7 @@ if (typeof window !== "undefined") {
 
     if (apiKey) {
       MetalogicsChatbot.init({
-        apiKey,
+        apiKey, // This should be the PUBLIC_WIDGET_KEY from environment
         apiUrl: apiUrl || defaultConfig.apiUrl,
         brandColor: brandColor || defaultConfig.brandColor,
         position: position || defaultConfig.position,

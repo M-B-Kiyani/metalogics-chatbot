@@ -178,7 +178,7 @@ async function startServer(): Promise<void> {
     );
 
     // Step 4: Start HTTP server
-    server = app.listen(PORT, () => {
+    server = app.listen(PORT, "0.0.0.0", () => {
       logger.info("Server started successfully", {
         port: PORT,
         environment: NODE_ENV,

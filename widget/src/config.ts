@@ -1,5 +1,5 @@
 export interface WidgetConfig {
-  apiKey: string;
+  apiKey: string; // This should be the PUBLIC_WIDGET_KEY, not the main API key
   apiUrl?: string;
   brandColor?: string;
   position?: "bottom-right" | "bottom-left";
@@ -9,7 +9,9 @@ export interface WidgetConfig {
 }
 
 export const defaultConfig: Partial<WidgetConfig> = {
-  apiUrl: "http://localhost:3000",
+  apiUrl:
+    import.meta.env.VITE_API_URL ||
+    "https://latest-chatbot-production.up.railway.app",
   brandColor: "#3b82f6",
   position: "bottom-right",
   greeting:

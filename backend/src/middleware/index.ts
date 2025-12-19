@@ -11,3 +11,4 @@ export { corsMiddleware } from "./cors.middleware";
 export { requestTimeout } from "./timeout.middleware";
 export { sanitizeInput } from "./sanitization.middleware";
 export { requestLogger } from "./requestLogger.middleware";
+export { widgetAuthMiddleware } from "./widget-auth.middleware";
