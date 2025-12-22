@@ -106,11 +106,13 @@ This guide explains how to deploy the three separate services (backend, frontend
    ```bash
    VITE_API_URL=https://your-backend-url.up.railway.app
    PUBLIC_WIDGET_KEY=your-public-widget-key-for-embeds
+   NODE_ENV=production
    ```
 
 3. **Build Configuration:**
-   - Build command: `npm run build`
-   - Start command: `serve -s dist -l $PORT`
+   - Build command: `npm run build` (handled by Dockerfile)
+   - Start command: `serve -s dist -l 0.0.0.0:$PORT --cors` (handled by Dockerfile)
+   - Health check: `/metalogics-chatbot.iife.js`
 
 ## Service URLs
 
@@ -199,11 +201,20 @@ curl https://widget-service.up.railway.app/metalogics-chatbot.iife.js
    - Verify widget service is deployed
    - Check browser console for errors
    - Ensure API key is correct
+   - Test widget files directly: `https://widget-service.up.railway.app/metalogics-chatbot.iife.js`
 
 3. **API Errors:**
+
    - Check backend logs in Railway dashboard
    - Verify environment variables are set
    - Test health endpoint
+
+4. **Widget Deployment Failures:**
+   - Ensure root directory is set to `widget` in Railway
+   - Check that Dockerfile builds successfully locally
+   - Verify environment variables are set correctly
+   - Check Railway build logs for specific errors
+   - Ensure PORT environment variable is available
 
 ### Logs
 

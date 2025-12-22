@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci --only=production
 
 # Copy source
 COPY . .
@@ -15,14 +15,18 @@ COPY . .
 # Build widget
 RUN npm run build
 
-# Install serve
-RUN npm install -g serve
+# Install serve globally
+RUN npm install -g serve@14.2.1
 
-# Railway injects PORT
+# Railway injects PORT, default to 3000
 ENV PORT=3000
 
-# Optional, for humans
-EXPOSE 3000
+# Expose port
+EXPOSE $PORT
 
-# Serve widget statically (correct binding)
-CMD ["sh", "-c", "serve -s dist -l 0.0.0.0:${PORT:-3000}"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:$PORT/metalogics-chatbot.iife.js || exit 1
+
+# Serve widget statically with proper binding
+CMD ["sh", "-c", "serve -s dist -l 0.0.0.0:${PORT:-3000} --cors"]

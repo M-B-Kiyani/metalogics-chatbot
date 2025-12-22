@@ -7,8 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "start": "serve -s dist -l 3002",
-    "start:prod": "serve -s dist -l $PORT",
-    "serve": "vite preview"
+    "start:prod": "serve -s dist -l 0.0.0.0:$PORT --cors",
+    "serve": "vite preview",
+    "validate": "node validate-deployment.js",
+    "test:local": "WIDGET_URL=http://localhost:3002 npm run validate",
+    "test:prod": "npm run validate"
   },
   "dependencies": {
     "@google/genai": "^1.29.1",
