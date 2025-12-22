@@ -866,11 +866,18 @@ export class BookingService {
           duration
         );
       } catch (error) {
-        logger.error("Failed to get available slots from calendar", {
+        logger.error("Failed to get available slots from calendar, falling back to local logic", {
           error: error instanceof Error ? error.message : String(error),
         });
-        // If calendar service fails, return empty array or throw error
-        throw error;
+        
+        // Fallback: If calendar service fails, generate slots based on business hours only
+        const businessHours = this.calendarService.getBusinessHours();
+        availableSlots = await this.calendarService.getAvailableSlots(
+          startDate,
+          endDate,
+          duration,
+          businessHours
+        );
       }
     } else {
       // If calendar is not enabled, generate slots based on business hours only
