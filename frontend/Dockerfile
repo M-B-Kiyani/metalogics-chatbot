@@ -9,6 +9,9 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
+# Install serve globally for reliable access
+RUN npm install -g serve
+
 # Copy source code
 COPY . .
 
@@ -22,4 +25,4 @@ ENV PORT=3000
 EXPOSE 3000
 
 # Start the application with explicit command
-CMD ["sh", "-c", "exec npx serve -s dist -p \"${PORT:-3000}\""]
+CMD ["sh", "-c", "serve -s dist -p \"${PORT:-3000}\""]
