@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "start": "serve -s dist -p 3000",
+    "start": "node server.js",
     "preview": "vite preview",
     "build:knowledge": "tsx scripts/scrape-website.ts",
     "build:curated": "tsx scripts/build-curated-knowledge.ts",
@@ -26,6 +26,7 @@
   "dependencies": {
     "@google/genai": "^1.29.1",
     "dotenv": "^17.2.3",
+    "express": "^4.18.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "retell-client-js-sdk": "^2.0.7",

@@ -9,9 +9,6 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
-# Install serve globally for reliable access
-RUN npm install -g serve
-
 # Copy source code
 COPY . .
 
@@ -24,5 +21,5 @@ ENV PORT=3000
 # Expose port
 EXPOSE 3000
 
-# Start the application with explicit command
-CMD ["sh", "-c", "npx serve -s dist -l tcp://0.0.0.0:${PORT:-3000}"]
+# Start the application with Node.js server
+CMD ["npm", "start"]
