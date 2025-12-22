@@ -109,7 +109,8 @@ async function verifyAppSetup() {
     );
     console.log(
       `   - Allowed origins: ${
-        process.env.ALLOWED_ORIGINS || "http://localhost:5173"
+        process.env.ALLOWED_ORIGINS ||
+        "*,https://bilal.metalogics.io,https://www.bilal.metalogics.io,https://frontend-production-metabot.up.railway.app"
       } (default)`
     );
 
