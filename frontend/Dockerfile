@@ -1,4 +1,3 @@
-# Frontend Dockerfile
 FROM node:20-alpine
 
 WORKDIR /app
@@ -6,20 +5,20 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
+# Install deps
 RUN npm install
 
-# Copy source code
+# Copy source
 COPY . .
 
-# Build the application
+# Build frontend
 RUN npm run build
 
-# Set default port
+# Railway provides PORT
 ENV PORT=3000
 
-# Expose port
+# Expose is optional
 EXPOSE 3000
 
-# Start the application with Node.js server
-CMD ["npm", "start"]
+# Serve static build correctly
+CMD ["sh", "-c", "npx serve -s dist -l tcp://0.0.0.0:${PORT}"]
