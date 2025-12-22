@@ -59,7 +59,15 @@ async function startServer(): Promise<void> {
 
     // Step 1: Connect to database
     logger.info("Connecting to database...");
-    await databaseClient.connect();
+    await withTimeout(
+      databaseClient.connect(),
+      15000, 
+      "Database connection timed out after 15s. Check DATABASE_URL and network."
+    ).catch(err => {
+      logger.error("❌ Critical: Database connection failed during startup", { error: err.message });
+      // Re-throw to trigger fatal error handler
+      throw err;
+    });
     logger.info("Database connection established");
 
     // Step 2: Initialize dependencies
