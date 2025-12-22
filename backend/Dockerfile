@@ -28,9 +28,9 @@ RUN npx prisma generate
 # Expose port
 EXPOSE $PORT
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD curl -f http://127.0.0.1:$PORT/health || exit 1
+# Health check - Railway uses port 3000 by default
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://127.0.0.1:3000/health || exit 1
 
 # Start the application
 CMD ["npm", "start"]

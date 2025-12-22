@@ -256,7 +256,9 @@ const envSchema = z.object({
     .transform((val) => val === "true"),
 
   // CORS
-  ALLOWED_ORIGINS: z.string().default("*,https://frontend-production-metabot.up.railway.app"),
+  ALLOWED_ORIGINS: z
+    .string()
+    .default("*,https://frontend-production-metabot.up.railway.app"),
   ALLOWED_METHODS: z.string().default("GET,POST,PUT,PATCH,DELETE,OPTIONS"),
   ALLOWED_HEADERS: z.string().default("Content-Type,Authorization,x-api-key"),
   CORS_CREDENTIALS: z
@@ -481,11 +483,32 @@ function buildCorsConfig(): CorsConfig {
  * Build Google Calendar configuration
  */
 function buildGoogleCalendarConfig(): GoogleCalendarConfig {
+  let enabled = env.GOOGLE_CALENDAR_ENABLED;
+  let serviceAccountKey = env.GOOGLE_SERVICE_ACCOUNT_KEY || "";
+
+  // In production, validate JSON and auto-disable if invalid
+  if (
+    enabled &&
+    serviceAccountKey &&
+    !env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH &&
+    env.NODE_ENV === "production"
+  ) {
+    try {
+      JSON.parse(serviceAccountKey);
+    } catch (error) {
+      console.warn(
+        "⚠️  Invalid GOOGLE_SERVICE_ACCOUNT_KEY JSON detected - disabling Google Calendar in production"
+      );
+      enabled = false;
+      serviceAccountKey = "";
+    }
+  }
+
   return {
-    enabled: env.GOOGLE_CALENDAR_ENABLED,
+    enabled,
     serviceAccountEmail: env.GOOGLE_SERVICE_ACCOUNT_EMAIL || "",
     serviceAccountKeyPath: env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH || "",
-    serviceAccountKey: env.GOOGLE_SERVICE_ACCOUNT_KEY || "",
+    serviceAccountKey,
     calendarId: env.GOOGLE_CALENDAR_ID,
     timeZone: env.GOOGLE_CALENDAR_TIMEZONE,
     retryAttempts: env.GOOGLE_CALENDAR_RETRY_ATTEMPTS,
