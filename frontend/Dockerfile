@@ -15,11 +15,11 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Expose port
-EXPOSE $PORT
-
-# Set default port if not provided
+# Set default port
 ENV PORT=3000
 
-# Start the application
-CMD ["sh", "-c", "npx serve -s dist -p $PORT"]
+# Expose port
+EXPOSE 3000
+
+# Start the application with explicit command
+CMD ["sh", "-c", "exec npx serve -s dist -p \"${PORT:-3000}\""]
