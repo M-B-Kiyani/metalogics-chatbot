@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install all dependencies (including dev dependencies for build)
-RUN npm ci
+RUN npm install
 
 # Copy source files
 COPY . ./
@@ -15,7 +15,7 @@ COPY . ./
 RUN npm run build
 
 # Remove dev dependencies to reduce image size
-RUN npm ci --only=production && npm cache clean --force
+RUN npm install --only=production && npm cache clean --force
 
 # Railway provides PORT
 ENV PORT=3000
