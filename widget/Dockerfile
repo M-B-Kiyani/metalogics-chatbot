@@ -6,14 +6,17 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install --production
+# Install all dependencies (including devDependencies for build)
+RUN npm install
 
 # Copy source
 COPY . .
 
 # Build widget
 RUN npm run build
+
+# Clean up devDependencies to reduce image size
+RUN npm prune --production
 
 # Install serve globally
 RUN npm install -g serve@14.2.1
