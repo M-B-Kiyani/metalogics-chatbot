@@ -88,6 +88,21 @@ export const createApp = (
     retellController
   );
 
+  // Root endpoint for Railway
+  app.get("/", (req: Request, res: Response) => {
+    res.status(200).json({
+      success: true,
+      message: "Metalogics AI Assistant API",
+      version: "1.0.0",
+      timestamp: new Date().toISOString(),
+      endpoints: {
+        health: "/health",
+        api: "/api",
+        docs: "/api/docs",
+      },
+    });
+  });
+
   // Root health endpoint for Railway
   app.get("/health", (req: Request, res: Response) => {
     res
