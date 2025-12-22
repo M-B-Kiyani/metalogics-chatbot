@@ -23,6 +23,12 @@ export const corsMiddleware = () => {
   // Specific fallback for the user's frontend if not in env
   const knownFrontendUrl = "https://frontend-production-metabot.up.railway.app";
   
+  // Custom domains
+  const customDomains = [
+    "https://bilal.metalogics.io",
+    "https://www.bilal.metalogics.io"
+  ];
+  
   // Explicitly allow all Railway subdomains for this project
   // This Regex allows any https://*.up.railway.app
   const railwayDomainRegex = /^https:\/\/[a-zA-Z0-9-]+\.up\.railway\.app$/;
@@ -30,6 +36,7 @@ export const corsMiddleware = () => {
   logger.info("CORS configuration initialized", {
     allowedOrigins,
     knownFrontendUrl,
+    customDomains,
     environment: config.server.nodeEnv,
     credentials: config.cors.credentials
   });
@@ -53,8 +60,13 @@ export const corsMiddleware = () => {
       if (origin === knownFrontendUrl) {
          return callback(null, true);
       }
+      
+      // 4. Check Custom Domains
+      if (customDomains.includes(origin)) {
+        return callback(null, true);
+      }
 
-      // 4. Check Railway Domains (Auto-Discovery)
+      // 5. Check Railway Domains (Auto-Discovery)
       if (railwayDomainRegex.test(origin)) {
         return callback(null, true);
       }
