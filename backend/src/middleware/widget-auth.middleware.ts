@@ -44,7 +44,10 @@ export const widgetAuthMiddleware = (
       logger.warn("Invalid widget API key", {
         path: req.path,
         ip: req.ip,
-        keyPrefix: apiKey.substring(0, 8) + "...",
+        keyPrefix:
+          typeof apiKey === "string"
+            ? apiKey.substring(0, 8) + "..."
+            : "[array]",
       });
 
       res.status(401).json({

@@ -92,77 +92,85 @@ setInterval(() => {
 }, 60000);
 
 /**
- * Rate limiting middleware
- * Limits requests to a specified number per time window per IP address
- *
- * Configuration from environment variables:
- * - RATE_LIMIT_WINDOW_MS: Time window in milliseconds (default: 60000 = 1 minute)
- * - RATE_LIMIT_MAX_REQUESTS: Maximum requests per window (default: 100)
+ * Rate limiting middleware options
  */
-export const rateLimiter = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
-  try {
-    // Get configuration from config module
-    const windowMs = config.rateLimit.windowMs;
-    const maxRequests = config.rateLimit.maxRequests;
+interface RateLimiterOptions {
+  windowMs?: number;
+  max?: number;
+  message?: any;
+}
 
-    // Get the client IP address
-    const ip = req.ip || req.socket.remoteAddress || "unknown";
+/**
+ * Rate limiting middleware factory
+ * Creates a middleware function that limits requests to a specified number per time window per IP address
+ */
+export const rateLimiter =
+  (options: RateLimiterOptions = {}) =>
+  (req: Request, res: Response, next: NextFunction): void => {
+    try {
+      // Get configuration from options or config module
+      const windowMs = options.windowMs || config.rateLimit.windowMs;
+      const maxRequests = options.max || config.rateLimit.maxRequests;
 
-    // Increment the request count for this IP
-    const { count, exceeded, resetTime } = rateLimitStore.increment(
-      ip,
-      windowMs,
-      maxRequests
-    );
+      // Get the client IP address
+      const ip = req.ip || req.socket.remoteAddress || "unknown";
 
-    // Add rate limit headers to the response
-    res.setHeader("X-RateLimit-Limit", maxRequests.toString());
-    res.setHeader(
-      "X-RateLimit-Remaining",
-      Math.max(0, maxRequests - count).toString()
-    );
-    res.setHeader("X-RateLimit-Reset", new Date(resetTime).toISOString());
-
-    // If the limit is exceeded, return 429 Too Many Requests
-    if (exceeded) {
-      const retryAfter = Math.ceil((resetTime - Date.now()) / 1000);
-      res.setHeader("Retry-After", retryAfter.toString());
-
-      logger.warn("Rate limit exceeded", {
+      // Increment the request count for this IP
+      const { count, exceeded, resetTime } = rateLimitStore.increment(
         ip,
-        count,
-        maxRequests,
-        path: req.path,
-        method: req.method,
-      });
-
-      throw new AppError(
-        429,
-        `Too many requests. Please try again in ${retryAfter} seconds.`,
-        "RATE_LIMIT_EXCEEDED",
-        true
+        windowMs,
+        maxRequests
       );
-    }
 
-    // Log rate limit info for monitoring
-    if (count > maxRequests * 0.8) {
-      logger.info("Rate limit warning", {
-        ip,
-        count,
-        maxRequests,
-        remaining: maxRequests - count,
-      });
-    }
+      // Add rate limit headers to the response
+      res.setHeader("X-RateLimit-Limit", maxRequests.toString());
+      res.setHeader(
+        "X-RateLimit-Remaining",
+        Math.max(0, maxRequests - count).toString()
+      );
+      res.setHeader("X-RateLimit-Reset", new Date(resetTime).toISOString());
 
-    next();
-  } catch (error) {
-    next(error);
-  }
-};
+      // If the limit is exceeded, return 429 Too Many Requests
+      if (exceeded) {
+        const retryAfter = Math.ceil((resetTime - Date.now()) / 1000);
+        res.setHeader("Retry-After", retryAfter.toString());
+
+        logger.warn("Rate limit exceeded", {
+          ip,
+          count,
+          maxRequests,
+          path: req.path,
+          method: req.method,
+        });
+
+        if (options.message) {
+          res.status(429).json(options.message);
+          return;
+        }
+
+        throw new AppError(
+          429,
+          `Too many requests. Please try again in ${retryAfter} seconds.`,
+          "RATE_LIMIT_EXCEEDED",
+          true
+        );
+      }
+
+      // Log rate limit info for monitoring
+      if (count > maxRequests * 0.8) {
+        logger.info("Rate limit warning", {
+          ip,
+          count,
+          maxRequests,
+          remaining: maxRequests - count,
+        });
+      }
+
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
 
 /**
  * Export the store for testing purposes

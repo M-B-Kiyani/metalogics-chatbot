@@ -38,7 +38,7 @@ const NODE_ENV = config.server.nodeEnv;
 const VERSION = process.env.npm_package_version || "1.0.0";
 
 // Server instance
-let server: Server | null = null;
+let server: Server | undefined = undefined;
 
 /**
  * Initialize and start the server
@@ -273,7 +273,9 @@ async function gracefulShutdown(signal: string): Promise<void> {
     // Force close after timeout
     setTimeout(() => {
       logger.warn("Forcing server shutdown after timeout");
-      server?.closeAllConnections?.();
+      if (server && "closeAllConnections" in server) {
+        (server as any).closeAllConnections?.();
+      }
     }, 10000); // 10 second timeout
   }
 

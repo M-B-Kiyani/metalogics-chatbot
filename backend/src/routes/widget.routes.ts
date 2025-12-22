@@ -35,7 +35,7 @@ export const createWidgetRoutes = (
   router.use(widgetRateLimit);
 
   // Widget chat endpoint
-  router.post("/chat", conversationController.handleConversation);
+  router.post("/chat", conversationController.handleChatMessage);
 
   // Widget voice endpoints
   router.post("/retell/register-call", retellController.registerCall);
