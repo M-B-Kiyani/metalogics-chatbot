@@ -9,17 +9,20 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci
 
-# Copy source code
+# Copy source
 COPY . .
 
-# Build the widget
+# Build widget
 RUN npm run build
 
-# Install serve to serve static files
+# Install serve
 RUN npm install -g serve
 
-# Expose port
-EXPOSE $PORT
+# Railway injects PORT
+ENV PORT=3000
 
-# Start the application serving the dist folder
-CMD ["sh", "-c", "serve -s dist -l $PORT"]
+# Optional, for humans
+EXPOSE 3000
+
+# Serve widget statically (correct binding)
+CMD ["sh", "-c", "serve -s dist -l tcp://0.0.0.0:${PORT}"]
