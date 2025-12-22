@@ -58,14 +58,23 @@ export function validateGoogleCalendarConfig(): ValidationResult {
     );
   }
 
-  // Validate service account key path
-  if (!gcConfig.serviceAccountKeyPath) {
+  // Validate service account key (either path or JSON content)
+  const hasKeyPath = !!gcConfig.serviceAccountKeyPath;
+  const hasKeyContent = !!gcConfig.serviceAccountKey;
+
+  if (!hasKeyPath && !hasKeyContent) {
     result.valid = false;
     result.errors.push(
-      "GOOGLE_SERVICE_ACCOUNT_KEY_PATH is required when Google Calendar is enabled"
+      "Either GOOGLE_SERVICE_ACCOUNT_KEY_PATH or GOOGLE_SERVICE_ACCOUNT_KEY is required when Google Calendar is enabled"
     );
-  } else {
-    // Check if file exists
+  } else if (hasKeyPath && hasKeyContent) {
+    result.warnings.push(
+      "Both GOOGLE_SERVICE_ACCOUNT_KEY_PATH and GOOGLE_SERVICE_ACCOUNT_KEY are set. Using GOOGLE_SERVICE_ACCOUNT_KEY_PATH."
+    );
+  }
+
+  // Validate key path if provided
+  if (hasKeyPath) {
     const keyPath = path.resolve(gcConfig.serviceAccountKeyPath);
     if (!fs.existsSync(keyPath)) {
       result.valid = false;
@@ -75,44 +84,7 @@ export function validateGoogleCalendarConfig(): ValidationResult {
       try {
         const keyContent = fs.readFileSync(keyPath, "utf-8");
         const keyData = JSON.parse(keyContent);
-
-        // Validate required fields in service account key
-        const requiredFields = [
-          "type",
-          "project_id",
-          "private_key_id",
-          "private_key",
-          "client_email",
-          "client_id",
-        ];
-
-        for (const field of requiredFields) {
-          if (!keyData[field]) {
-            result.valid = false;
-            result.errors.push(
-              `Service account key file is missing required field: ${field}`
-            );
-          }
-        }
-
-        // Validate type is service_account
-        if (keyData.type !== "service_account") {
-          result.valid = false;
-          result.errors.push(
-            `Service account key type must be "service_account", got: ${keyData.type}`
-          );
-        }
-
-        // Validate private key format
-        if (
-          keyData.private_key &&
-          !keyData.private_key.includes("BEGIN PRIVATE KEY")
-        ) {
-          result.valid = false;
-          result.errors.push(
-            "Service account private_key appears to be invalid"
-          );
-        }
+        validateServiceAccountKeyData(keyData, result);
       } catch (error) {
         result.valid = false;
         if (error instanceof SyntaxError) {
@@ -127,6 +99,21 @@ export function validateGoogleCalendarConfig(): ValidationResult {
           );
         }
       }
+    }
+  }
+
+  // Validate key content if provided (and no path)
+  if (hasKeyContent && !hasKeyPath) {
+    try {
+      const keyData = JSON.parse(gcConfig.serviceAccountKey);
+      validateServiceAccountKeyData(keyData, result);
+    } catch (error) {
+      result.valid = false;
+      result.errors.push(
+        `GOOGLE_SERVICE_ACCOUNT_KEY is not valid JSON: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -484,6 +471,50 @@ function isValidTimezone(timezone: string): boolean {
 }
 
 /**
+ * Helper function to validate service account key data
+ */
+function validateServiceAccountKeyData(
+  keyData: any,
+  result: ValidationResult
+): void {
+  // Validate required fields in service account key
+  const requiredFields = [
+    "type",
+    "project_id",
+    "private_key_id",
+    "private_key",
+    "client_email",
+    "client_id",
+  ];
+
+  for (const field of requiredFields) {
+    if (!keyData[field]) {
+      result.valid = false;
+      result.errors.push(
+        `Service account key is missing required field: ${field}`
+      );
+    }
+  }
+
+  // Validate type is service_account
+  if (keyData.type !== "service_account") {
+    result.valid = false;
+    result.errors.push(
+      `Service account key type must be "service_account", got: ${keyData.type}`
+    );
+  }
+
+  // Validate private key format
+  if (
+    keyData.private_key &&
+    !keyData.private_key.includes("BEGIN PRIVATE KEY")
+  ) {
+    result.valid = false;
+    result.errors.push("Service account private_key appears to be invalid");
+  }
+}
+
+/**
  * Print detailed configuration summary with validation status
  */
 export function printDetailedConfigSummary(): void {
@@ -531,6 +562,15 @@ export function printDetailedConfigSummary(): void {
     console.log(
       `   Service Account: ${
         config.googleCalendar.serviceAccountEmail || "Not configured"
+      }`
+    );
+    console.log(
+      `   Key Source: ${
+        config.googleCalendar.serviceAccountKeyPath
+          ? "File path"
+          : config.googleCalendar.serviceAccountKey
+          ? "Environment variable"
+          : "Not configured"
       }`
     );
   }
