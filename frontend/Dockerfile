@@ -19,4 +19,4 @@ RUN npm run build
 EXPOSE $PORT
 
 # Start the application
-CMD ["sh", "-c", "serve -s dist -l $PORT"]
+CMD ["sh", "-c", "npx serve -s dist -l $PORT"]
