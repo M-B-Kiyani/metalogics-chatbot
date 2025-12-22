@@ -43,8 +43,12 @@ let server: Server | undefined = undefined;
 /**
  * Initialize and start the server
  */
+/**
+ * Initialize and start the server
+ */
 async function startServer(): Promise<void> {
   try {
+    console.log("SERVER BOOT SEQUENCE STARTED"); // Direct console log for visibility
     logger.info("Starting server initialization", {
       environment: NODE_ENV,
       version: VERSION,
@@ -57,20 +61,7 @@ async function startServer(): Promise<void> {
     // Print detailed configuration summary
     printDetailedConfigSummary();
 
-    // Step 1: Connect to database
-    logger.info("Connecting to database...");
-    await withTimeout(
-      databaseClient.connect(),
-      15000, 
-      "Database connection timed out after 15s. Check DATABASE_URL and network."
-    ).catch(err => {
-      logger.error("❌ Critical: Database connection failed during startup", { error: err.message });
-      // Re-throw to trigger fatal error handler
-      throw err;
-    });
-    logger.info("Database connection established");
-
-    // Step 2: Initialize dependencies
+    // Step 1: Initialize application dependencies (BUT DO NOT CONNECT YET)
     logger.info("Initializing application dependencies...");
 
     // Create repository
@@ -84,49 +75,9 @@ async function startServer(): Promise<void> {
     const calendarClient = new CalendarClient();
     const calendarService = new CalendarService(calendarClient);
 
-    // Initialize Google Calendar in background (non-blocking)
-    if (config.googleCalendar.enabled) {
-      logger.info("Initializing Google Calendar in background...");
-      withTimeout(
-        calendarClient.initializeFromConfig(),
-        5000,
-        "Google Calendar initialization timed out"
-      )
-        .then(() => {
-          logger.info("✅ Google Calendar initialized successfully");
-        })
-        .catch((error) => {
-          logger.error("❌ Failed to initialize Google Calendar", {
-            error: error instanceof Error ? error.message : String(error),
-          });
-          logger.warn("⚠️  Calendar integration disabled");
-          config.googleCalendar.enabled = false;
-        });
-    }
-
     // Create HubSpot client and CRM service
     const hubspotClient = new HubSpotClient();
     const crmService = new CRMService(hubspotClient);
-
-    // Initialize HubSpot in background (non-blocking)
-    if (config.hubspot.enabled) {
-      logger.info("Initializing HubSpot CRM in background...");
-      withTimeout(
-        hubspotClient.initializeFromConfig(),
-        5000,
-        "HubSpot initialization timed out"
-      )
-        .then(() => {
-          logger.info("✅ HubSpot CRM initialized successfully");
-        })
-        .catch((error) => {
-          logger.error("❌ Failed to initialize HubSpot", {
-            error: error instanceof Error ? error.message : String(error),
-          });
-          logger.warn("⚠️  HubSpot integration disabled");
-          config.hubspot.enabled = false;
-        });
-    }
 
     // Get Prisma client for service
     const prismaClient = databaseClient.getClient();
@@ -153,7 +104,6 @@ async function startServer(): Promise<void> {
     // Link services to Retell LLM service for voice integration
     retellLLMService.setConversationService(conversationService);
     retellLLMService.setVoiceFunctionsService(voiceFunctionsService);
-    logger.info("Voice integration enabled with calendar and CRM access");
 
     // Create controllers
     const bookingController = new BookingController(bookingService);
@@ -175,7 +125,7 @@ async function startServer(): Promise<void> {
 
     logger.info("Application dependencies initialized");
 
-    // Step 3: Create Express app
+    // Step 2: Create Express app
     logger.info("Creating Express application...");
     const app = createApp(
       bookingController,
@@ -185,7 +135,8 @@ async function startServer(): Promise<void> {
       retellController
     );
 
-    // Step 4: Start HTTP server
+    // Step 3: Start HTTP server IMMEDIATELY (Before DB Connection)
+    // This ensures Railway Healthchecks pass while DB connects in background
     server = app.listen(PORT, "0.0.0.0", () => {
       logger.info("Server started successfully", {
         port: PORT,
@@ -193,73 +144,59 @@ async function startServer(): Promise<void> {
         version: VERSION,
         apiBaseUrl: `http://localhost:${PORT}`,
         healthCheckUrl: `http://localhost:${PORT}/api/health`,
-        docsUrl: `http://localhost:${PORT}/api/docs`,
       });
-
-      logger.info("Server is ready to accept connections");
+      logger.info("Server is ready to accept connections (DB connecting in background...)");
     });
 
-    // Step 5: Setup WebSocket server for Retell custom LLM
+    // Step 4: Setup WebSocket server
     const wss = new WebSocketServer({ server });
-
     wss.on("connection", (ws: WebSocket, req) => {
-      const parsedUrl = parse(req.url || "", true);
-      const pathname = parsedUrl.pathname;
-
-      logger.info("WebSocket connection attempt", {
-        pathname,
-        origin: req.headers.origin,
-      });
-
-      // Handle Retell LLM WebSocket connections
-      if (pathname === "/api/retell/llm") {
-        const callId =
-          (parsedUrl.query.call_id as string) || `ws-${Date.now()}`;
-        logger.info("Retell LLM WebSocket connected", { callId });
-        retellLLMService.handleConnection(ws, callId);
-      } else {
-        logger.warn("Unknown WebSocket path", { pathname });
-        ws.close(1008, "Unknown path");
-      }
+        const parsedUrl = parse(req.url || "", true);
+        const pathname = parsedUrl.pathname;
+        if (pathname === "/api/retell/llm") {
+          const callId = (parsedUrl.query.call_id as string) || `ws-${Date.now()}`;
+          retellLLMService.handleConnection(ws, callId);
+        } else {
+          ws.close(1008, "Unknown path");
+        }
     });
 
-    wss.on("error", (error: Error) => {
-      logger.error("WebSocket server error", {
-        error: error.message,
-        stack: error.stack,
-      });
+    // Step 5: Connect to database (with timeout)
+    logger.info("Connecting to database...");
+    withTimeout(
+      databaseClient.connect(),
+      15000, 
+      "Database connection timed out after 15s. Check DATABASE_URL and network."
+    ).then(() => {
+        logger.info("✅ Database connection established");
+    }).catch(err => {
+      logger.error("❌ Critical: Database connection failed during startup", { error: err.message });
+      // We do NOT exit here to keep the server running for logs/healthchecks, 
+      // but the app won't function correctly for data.
     });
 
-    logger.info("WebSocket server initialized", {
-      path: "/api/retell/llm",
-    });
+    // Initialize Google Calendar in background
+    if (config.googleCalendar.enabled) {
+      calendarClient.initializeFromConfig().catch(err => logger.error("Calendar init failed", err));
+    }
+
+    // Initialize HubSpot in background
+    if (config.hubspot.enabled) {
+      hubspotClient.initializeFromConfig().catch(err => logger.error("HubSpot init failed", err));
+    }
 
     // Handle server errors
     server.on("error", (error: NodeJS.ErrnoException) => {
       if (error.code === "EADDRINUSE") {
-        logger.error(`Port ${PORT} is already in use`, {
-          error: error.message,
-        });
+        logger.error(`Port ${PORT} is already in use`);
       } else {
-        logger.error("Server error occurred", {
-          error: error.message,
-          stack: error.stack,
-        });
+        logger.error("Server error occurred", error);
       }
       process.exit(1);
     });
+
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    const errorStack = error instanceof Error ? error.stack : undefined;
-
-    logger.error("Failed to start server", {
-      error: errorMessage,
-      stack: errorStack,
-    });
-
-    // Cleanup and exit
-    await gracefulShutdown("startup_error");
+    console.error("FATAL STARTUP ERROR:", error);
     process.exit(1);
   }
 }

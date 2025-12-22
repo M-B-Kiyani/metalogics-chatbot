@@ -32,4 +32,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:$PORT/metalogics-chatbot.iife.js || exit 1
 
 # Serve widget statically with proper binding
-CMD ["sh", "-c", "serve -s dist -l 0.0.0.0:${PORT:-3000} --cors"]
+CMD ["sh", "-c", "serve -s dist -l ${PORT:-3000} --cors"]
