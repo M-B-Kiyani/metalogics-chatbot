@@ -20,5 +20,5 @@ ENV PORT=3000
 # Expose is optional
 EXPOSE 3000
 
-# Serve static build correctly
-CMD ["sh", "-c", "npx serve -s dist -l tcp://0.0.0.0:${PORT}"]
+# Use our Express server instead of serve
+CMD ["npm", "start"]
