@@ -291,7 +291,8 @@ async function testCorsHeaders(): Promise<TestResult> {
   try {
     const response = await axios.options(`${API_BASE_URL}/api/health`, {
       headers: {
-        Origin: "http://localhost:5173",
+        Origin:
+          "*,https://bilal.metalogics.io,https://www.bilal.metalogics.io,https://frontend-production-metabot.up.railway.app",
         "Access-Control-Request-Method": "GET",
       },
       timeout: 5000,
