@@ -25,4 +25,4 @@ ENV PORT=3000
 EXPOSE 3000
 
 # Serve widget statically (correct binding)
-CMD ["sh", "-c", "serve -s dist -l tcp://0.0.0.0:${PORT}"]
+CMD ["sh", "-c", "serve -s dist -l ${PORT:-3000}"]
