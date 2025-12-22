@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metalogics Chatbot Widget Integration</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            background-color: #f9fafb;
+            border-radius: 8px;
+            padding: 32px;
+            border: 1px solid #e5e7eb;
+        }
+        h1 { margin-top: 0; color: #111827; }
+        code {
+            background-color: #f3f4f6;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: "Menlo", "Monaco", "Courier New", monospace;
+            font-size: 0.9em;
+            color: #ef4444;
+        }
+        pre {
+            background-color: #1f2937;
+            color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: "Menlo", "Monaco", "Courier New", monospace;
+            font-size: 14px;
+        }
+        .note {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 16px;
+            margin: 20px 0;
+            color: #1e40af;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Chatbot Widget Integration</h1>
+        <p>Copy and paste the code below before the closing <code>&lt;/body&gt;</code> tag of your website.</p>
+        
+        <div class="note">
+            <strong>Important:</strong> Replace the URL placeholders with your actual Railway service URLs and your specific Widget API Key.
+        </div>
+
+        <h3>Integration Code:</h3>
+        <pre>&lt;!-- Metalogics Chatbot Widget --&gt;
+&lt;script 
+  src="https://YOUR-WIDGET-SERVICE-URL.up.railway.app/metalogics-chatbot.iife.js"
+  data-api-key="YOUR_WIDGET_API_KEY"
+  data-api-url="https://YOUR-BACKEND-SERVICE-URL.up.railway.app"
+  data-brand-color="#2563eb"
+  data-position="bottom-right"
+  defer
+&gt;&lt;/script&gt;</pre>
+
+    </div>
+</body>
+</html>

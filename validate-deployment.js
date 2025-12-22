@@ -104,14 +104,16 @@ async function testWidgetEndpoint() {
       }),
     });
 
-    if (response.statusCode === 200 || response.statusCode === 401) {
+    if (response.statusCode === 200 || response.statusCode === 201 || response.statusCode === 401) {
       console.log("   ✅ Widget endpoint accessible");
       if (response.statusCode === 401) {
-        console.log("   ⚠️  Authentication required (expected)");
+        console.log("   ⚠️  Authentication required (expected behavior without valid key)");
       }
       return true;
     } else {
-      console.log(`   ❌ Widget endpoint failed (${response.statusCode})`);
+      console.log(`   ❌ Widget endpoint failed with status code: ${response.statusCode}`);
+      if (response.statusCode === 404) console.log("   👉 Check if the /api/widget/chat route exists in backend");
+      if (response.statusCode === 500) console.log("   👉 Internal Server Error - Check backend logs");
       return false;
     }
   } catch (error) {

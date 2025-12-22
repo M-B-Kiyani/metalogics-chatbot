@@ -33,8 +33,8 @@ export const corsMiddleware = () => {
         return callback(null, true);
       }
 
-      // Check if the origin is in the allowed list
-      if (allowedOrigins.includes(origin)) {
+      // Check if the origin is in the allowed list or if wildcard is used
+      if (allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         logger.warn("CORS request blocked", {
