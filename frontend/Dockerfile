@@ -25,4 +25,4 @@ ENV PORT=3000
 EXPOSE 3000
 
 # Start the application with explicit command
-CMD ["sh", "-c", "serve -s dist -p \"${PORT:-3000}\""]
+CMD ["sh", "-c", "npx serve -s dist -l tcp://0.0.0.0:${PORT:-3000}"]
