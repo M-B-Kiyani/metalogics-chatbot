@@ -61,7 +61,16 @@ async function startServer(): Promise<void> {
     // Print detailed configuration summary
     printDetailedConfigSummary();
 
-    // Step 1: Initialize application dependencies (BUT DO NOT CONNECT YET)
+    // Step 1: Connect to database FIRST
+    logger.info("Connecting to database...");
+    await withTimeout(
+      databaseClient.connect(),
+      15000,
+      "Database connection timed out after 15s. Check DATABASE_URL and network."
+    );
+    logger.info("✅ Database connection established");
+
+    // Step 2: Initialize application dependencies (AFTER DB connection)
     logger.info("Initializing application dependencies...");
 
     // Create repository
@@ -125,7 +134,7 @@ async function startServer(): Promise<void> {
 
     logger.info("Application dependencies initialized");
 
-    // Step 2: Create Express app
+    // Step 3: Create Express app
     logger.info("Creating Express application...");
     const app = createApp(
       bookingController,
@@ -135,8 +144,7 @@ async function startServer(): Promise<void> {
       retellController
     );
 
-    // Step 3: Start HTTP server IMMEDIATELY (Before DB Connection)
-    // This ensures Railway Healthchecks pass while DB connects in background
+    // Step 4: Start HTTP server
     server = app.listen(PORT, "0.0.0.0", () => {
       logger.info("Server started successfully", {
         port: PORT,
@@ -145,44 +153,35 @@ async function startServer(): Promise<void> {
         apiBaseUrl: `http://localhost:${PORT}`,
         healthCheckUrl: `http://localhost:${PORT}/api/health`,
       });
-      logger.info("Server is ready to accept connections (DB connecting in background...)");
+      logger.info("✅ Server is ready to accept connections");
     });
 
-    // Step 4: Setup WebSocket server
+    // Step 5: Setup WebSocket server
     const wss = new WebSocketServer({ server });
     wss.on("connection", (ws: WebSocket, req) => {
-        const parsedUrl = parse(req.url || "", true);
-        const pathname = parsedUrl.pathname;
-        if (pathname === "/api/retell/llm") {
-          const callId = (parsedUrl.query.call_id as string) || `ws-${Date.now()}`;
-          retellLLMService.handleConnection(ws, callId);
-        } else {
-          ws.close(1008, "Unknown path");
-        }
+      const parsedUrl = parse(req.url || "", true);
+      const pathname = parsedUrl.pathname;
+      if (pathname === "/api/retell/llm") {
+        const callId =
+          (parsedUrl.query.call_id as string) || `ws-${Date.now()}`;
+        retellLLMService.handleConnection(ws, callId);
+      } else {
+        ws.close(1008, "Unknown path");
+      }
     });
 
-    // Step 5: Connect to database (with timeout)
-    logger.info("Connecting to database...");
-    withTimeout(
-      databaseClient.connect(),
-      15000, 
-      "Database connection timed out after 15s. Check DATABASE_URL and network."
-    ).then(() => {
-        logger.info("✅ Database connection established");
-    }).catch(err => {
-      logger.error("❌ Critical: Database connection failed during startup", { error: err.message });
-      // We do NOT exit here to keep the server running for logs/healthchecks, 
-      // but the app won't function correctly for data.
-    });
-
-    // Initialize Google Calendar in background
+    // Step 6: Initialize Google Calendar in background
     if (config.googleCalendar.enabled) {
-      calendarClient.initializeFromConfig().catch(err => logger.error("Calendar init failed", err));
+      calendarClient
+        .initializeFromConfig()
+        .catch((err) => logger.error("Calendar init failed", err));
     }
 
-    // Initialize HubSpot in background
+    // Step 7: Initialize HubSpot in background
     if (config.hubspot.enabled) {
-      hubspotClient.initializeFromConfig().catch(err => logger.error("HubSpot init failed", err));
+      hubspotClient
+        .initializeFromConfig()
+        .catch((err) => logger.error("HubSpot init failed", err));
     }
 
     // Handle server errors
@@ -194,7 +193,6 @@ async function startServer(): Promise<void> {
       }
       process.exit(1);
     });
-
   } catch (error) {
     console.error("FATAL STARTUP ERROR:", error);
     process.exit(1);
