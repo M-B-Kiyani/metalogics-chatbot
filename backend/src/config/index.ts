@@ -256,7 +256,7 @@ const envSchema = z.object({
     .transform((val) => val === "true"),
 
   // CORS
-  ALLOWED_ORIGINS: z.string().default("*"),
+  ALLOWED_ORIGINS: z.string().default("*,https://frontend-production-metabot.up.railway.app"),
   ALLOWED_METHODS: z.string().default("GET,POST,PUT,PATCH,DELETE,OPTIONS"),
   ALLOWED_HEADERS: z.string().default("Content-Type,Authorization,x-api-key"),
   CORS_CREDENTIALS: z

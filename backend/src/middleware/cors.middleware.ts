@@ -34,12 +34,16 @@ export const corsMiddleware = () => {
       }
 
       // Check if the origin is in the allowed list or if wildcard is used
-      if (allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
+      // We also verify if it's a Railway deployment (allows all services in the project to communicate)
+      const isRailwayDeployment = origin && origin.endsWith(".up.railway.app");
+      
+      if (allowedOrigins.includes("*") || allowedOrigins.includes(origin) || isRailwayDeployment) {
         callback(null, true);
       } else {
         logger.warn("CORS request blocked", {
           origin,
           allowedOrigins,
+          isRailwayDeployment
         });
         callback(new Error("Not allowed by CORS"));
       }
