@@ -10,7 +10,8 @@ const http = require("http");
 
 // Configuration
 const BACKEND_URL =
-  process.env.BACKEND_URL || "https://latest-chatbot-production.up.railway.app";
+  process.env.BACKEND_URL ||
+  "https://metalogics-chatbot-production.up.railway.app";
 const FRONTEND_URL =
   process.env.FRONTEND_URL || "https://frontend-service.up.railway.app";
 const WIDGET_URL =
@@ -104,16 +105,28 @@ async function testWidgetEndpoint() {
       }),
     });
 
-    if (response.statusCode === 200 || response.statusCode === 201 || response.statusCode === 401) {
+    if (
+      response.statusCode === 200 ||
+      response.statusCode === 201 ||
+      response.statusCode === 401
+    ) {
       console.log("   ✅ Widget endpoint accessible");
       if (response.statusCode === 401) {
-        console.log("   ⚠️  Authentication required (expected behavior without valid key)");
+        console.log(
+          "   ⚠️  Authentication required (expected behavior without valid key)"
+        );
       }
       return true;
     } else {
-      console.log(`   ❌ Widget endpoint failed with status code: ${response.statusCode}`);
-      if (response.statusCode === 404) console.log("   👉 Check if the /api/widget/chat route exists in backend");
-      if (response.statusCode === 500) console.log("   👉 Internal Server Error - Check backend logs");
+      console.log(
+        `   ❌ Widget endpoint failed with status code: ${response.statusCode}`
+      );
+      if (response.statusCode === 404)
+        console.log(
+          "   👉 Check if the /api/widget/chat route exists in backend"
+        );
+      if (response.statusCode === 500)
+        console.log("   👉 Internal Server Error - Check backend logs");
       return false;
     }
   } catch (error) {

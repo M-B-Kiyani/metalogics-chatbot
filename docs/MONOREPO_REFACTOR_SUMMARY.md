@@ -160,14 +160,14 @@ DATABASE_URL=postgresql://...
 #### Frontend
 
 ```bash
-VITE_API_BASE_URL=https://latest-chatbot-production.up.railway.app
+VITE_API_BASE_URL=https://metalogics-chatbot-production.up.railway.app
 VITE_API_KEY=your-secure-api-key-min-32-characters-long
 ```
 
 #### Widget
 
 ```bash
-VITE_API_URL=https://latest-chatbot-production.up.railway.app
+VITE_API_URL=https://metalogics-chatbot-production.up.railway.app
 PUBLIC_WIDGET_KEY=your-public-widget-key-for-embeds
 ```
 
@@ -179,7 +179,7 @@ PUBLIC_WIDGET_KEY=your-public-widget-key-for-embeds
 <script
   src="https://widget-service.up.railway.app/metalogics-chatbot.iife.js"
   data-api-key="your-public-widget-key-for-embeds"
-  data-api-url="https://latest-chatbot-production.up.railway.app"
+  data-api-url="https://metalogics-chatbot-production.up.railway.app"
   data-brand-color="#3b82f6"
   data-position="bottom-right"
 ></script>

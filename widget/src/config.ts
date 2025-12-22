@@ -11,7 +11,7 @@ export interface WidgetConfig {
 export const defaultConfig: Partial<WidgetConfig> = {
   apiUrl:
     import.meta.env.VITE_API_URL ||
-    "https://latest-chatbot-production.up.railway.app",
+    "https://metalogics-chatbot-production.up.railway.app",
   brandColor: "#3b82f6",
   position: "bottom-right",
   greeting:

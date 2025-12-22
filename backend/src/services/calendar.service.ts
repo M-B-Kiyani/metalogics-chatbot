@@ -6,6 +6,7 @@ import {
 } from "../integrations/calendar.client";
 import { logger } from "../utils/logger";
 import { config } from "../config";
+import { withTimeout } from "../utils/timeout";
 import {
   addMinutes,
   startOfDay,
@@ -102,8 +103,12 @@ export class CalendarService {
     });
 
     try {
-      // Fetch calendar events
-      const events = await this.calendarClient.getEvents(startDate, endDate);
+      // Fetch calendar events with timeout protection
+      const events = await withTimeout(
+        this.calendarClient.getEvents(startDate, endDate),
+        10000, // 10 second timeout for calendar API call
+        "Google Calendar API call timed out"
+      );
 
       // Filter out cancelled events and extract busy slots
       const busySlots: TimeSlot[] = events
@@ -355,8 +360,12 @@ export class CalendarService {
     });
 
     try {
-      // Get busy slots from calendar
-      const busySlots = await this.getBusySlots(startDate, endDate);
+      // Get busy slots from calendar with timeout protection
+      const busySlots = await withTimeout(
+        this.getBusySlots(startDate, endDate),
+        15000, // 15 second timeout for calendar operations
+        "Calendar busy slots fetch timed out"
+      );
 
       // Calculate minimum and maximum start times
       const now = new Date();
