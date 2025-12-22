@@ -108,22 +108,12 @@ export function validateGoogleCalendarConfig(): ValidationResult {
       const keyData = JSON.parse(gcConfig.serviceAccountKey);
       validateServiceAccountKeyData(keyData, result);
     } catch (error) {
-      // In production, automatically disable Google Calendar if JSON is invalid
-      if (process.env.NODE_ENV === "production") {
-        result.warnings.push(
-          `GOOGLE_SERVICE_ACCOUNT_KEY is not valid JSON - automatically disabling Google Calendar in production`
-        );
-        // Disable Google Calendar by modifying the config
-        (gcConfig as any).enabled = false;
-        return result; // Return early to skip other validations
-      } else {
-        result.valid = false;
-        result.errors.push(
-          `GOOGLE_SERVICE_ACCOUNT_KEY is not valid JSON: ${
-            error instanceof Error ? error.message : String(error)
-          }`
-        );
-      }
+      result.valid = false;
+      result.errors.push(
+        `GOOGLE_SERVICE_ACCOUNT_KEY is not valid JSON: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 

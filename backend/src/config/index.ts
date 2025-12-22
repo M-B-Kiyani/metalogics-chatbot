@@ -483,32 +483,11 @@ function buildCorsConfig(): CorsConfig {
  * Build Google Calendar configuration
  */
 function buildGoogleCalendarConfig(): GoogleCalendarConfig {
-  let enabled = env.GOOGLE_CALENDAR_ENABLED;
-  let serviceAccountKey = env.GOOGLE_SERVICE_ACCOUNT_KEY || "";
-
-  // In production, validate JSON and auto-disable if invalid
-  if (
-    enabled &&
-    serviceAccountKey &&
-    !env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH &&
-    env.NODE_ENV === "production"
-  ) {
-    try {
-      JSON.parse(serviceAccountKey);
-    } catch (error) {
-      console.warn(
-        "⚠️  Invalid GOOGLE_SERVICE_ACCOUNT_KEY JSON detected - disabling Google Calendar in production"
-      );
-      enabled = false;
-      serviceAccountKey = "";
-    }
-  }
-
   return {
-    enabled,
+    enabled: env.GOOGLE_CALENDAR_ENABLED,
     serviceAccountEmail: env.GOOGLE_SERVICE_ACCOUNT_EMAIL || "",
     serviceAccountKeyPath: env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH || "",
-    serviceAccountKey,
+    serviceAccountKey: env.GOOGLE_SERVICE_ACCOUNT_KEY || "",
     calendarId: env.GOOGLE_CALENDAR_ID,
     timeZone: env.GOOGLE_CALENDAR_TIMEZONE,
     retryAttempts: env.GOOGLE_CALENDAR_RETRY_ATTEMPTS,
