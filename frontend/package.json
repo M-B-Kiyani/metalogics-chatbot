@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "start": "serve -s dist -l $PORT",
+    "start": "serve -s dist -p 3000",
     "preview": "vite preview",
     "build:knowledge": "tsx scripts/scrape-website.ts",
     "build:curated": "tsx scripts/build-curated-knowledge.ts",

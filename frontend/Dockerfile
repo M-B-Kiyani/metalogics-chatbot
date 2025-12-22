@@ -18,5 +18,8 @@ RUN npm run build
 # Expose port
 EXPOSE $PORT
 
+# Set default port if not provided
+ENV PORT=3000
+
 # Start the application
-CMD ["sh", "-c", "npx serve -s dist -l $PORT"]
+CMD ["sh", "-c", "npx serve -s dist -p $PORT"]
