@@ -8,7 +8,7 @@ Copy these to your Railway Dashboard → Variables tab:
 
 ```bash
 NODE_ENV=production
-API_KEY=7eaeb10d330789a82e0883d89393cf57fcbc4771935a4b389f1f1ec4f924f2a5
+API_KEY=c37914b47420e9bbf2c30e9f8d2f5efd435a8086b8841073972559a084c20d19
 ```
 
 ### **Database** (Auto-set by Railway PostgreSQL service)
