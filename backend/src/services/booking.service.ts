@@ -900,12 +900,36 @@ export class BookingService {
       );
     }
 
-    // Get database bookings in the date range to filter out conflicts
-    const bookings = await this.bookingRepository.findMany({
-      dateFrom: startDate,
-      dateTo: endDate,
-      limit: 1000, // Large limit to get all bookings in range
-    });
+    // Get database bookings in the date range to filter out conflicts (with timeout)
+    let bookings: any[] = [];
+    try {
+      const bookingQueryPromise = this.bookingRepository.findMany({
+        dateFrom: startDate,
+        dateTo: endDate,
+        limit: 100, // Reduced limit for faster query
+      });
+
+      const bookingTimeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Database query timed out")), 2000);
+      });
+
+      bookings = (await Promise.race([
+        bookingQueryPromise,
+        bookingTimeoutPromise,
+      ])) as any[];
+
+      logger.info("Database bookings retrieved successfully", {
+        bookingsCount: bookings.length,
+      });
+    } catch (error) {
+      logger.warn(
+        "Database query failed or timed out, proceeding without booking filter",
+        {
+          error: error instanceof Error ? error.message : String(error),
+        }
+      );
+      bookings = []; // Empty array means no conflicts to filter
+    }
 
     // Filter out slots that conflict with database bookings
     const finalAvailableSlots = availableSlots.filter((slot) => {
