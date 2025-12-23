@@ -84,16 +84,16 @@ CORS_CREDENTIALS=true
 # Test custom domain
 curl -H "Origin: https://bilal.metalogics.io" \
      -H "Authorization: Bearer YOUR_API_KEY" \
-     "https://latest-chatbot-production.up.railway.app/api/health"
+     "https://metalogics-chatbot-production.up.railway.app//api/health"
 
 # Test Railway domain
 curl -H "Origin: https://frontend-production-metabot.up.railway.app" \
      -H "Authorization: Bearer YOUR_API_KEY" \
-     "https://latest-chatbot-production.up.railway.app/api/health"
+     "https://metalogics-chatbot-production.up.railway.app//api/health"
 
 # Test widget endpoint
 curl -H "Origin: https://bilal.metalogics.io" \
-     "https://latest-chatbot-production.up.railway.app/api/bookings/available-slots?startDate=2024-12-25T00:00:00.000Z&endDate=2024-12-30T00:00:00.000Z&duration=30"
+     "https://metalogics-chatbot-production.up.railway.app//api/bookings/available-slots?startDate=2024-12-25T00:00:00.000Z&endDate=2024-12-30T00:00:00.000Z&duration=30"
 ```
 
 ## Railway Environment Variables

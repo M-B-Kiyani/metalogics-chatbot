@@ -15,6 +15,7 @@ import { FrequencyLimitError } from "../errors/FrequencyLimitError";
 import { logger } from "../utils/logger";
 import { config } from "../config";
 import { cacheService, CacheKeys } from "../utils/cache.service";
+import { withTimeout } from "../utils/timeout";
 
 /**
  * DTO for creating a booking
@@ -860,10 +861,14 @@ export class BookingService {
 
     if (config.googleCalendar.enabled) {
       try {
-        availableSlots = await this.calendarService.getAvailableSlots(
-          startDate,
-          endDate,
-          duration
+        availableSlots = await withTimeout(
+          this.calendarService.getAvailableSlots(
+            startDate,
+            endDate,
+            duration
+          ),
+          5000, // 5 second timeout for calendar
+          "Calendar API timed out"
         );
       } catch (error) {
         logger.error("Failed to get available slots from calendar, falling back to local logic", {
