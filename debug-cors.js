@@ -7,7 +7,7 @@
 
 const https = require("https");
 
-const BACKEND_URL = "https://latest-chatbot-production.up.railway.app";
+const BACKEND_URL = "https://metalogics-chatbot-production.up.railway.app";
 const FRONTEND_URL = "https://frontend-production-metabot.up.railway.app";
 
 console.log("🔍 CORS Debug Script\n");

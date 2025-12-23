@@ -1,71 +1,56 @@
 import cors, { CorsOptions } from "cors";
-import { logger } from "../utils/logger";
-import { config } from "../config";
 
 /**
  * CORS middleware configuration
- * Configures Cross-Origin Resource Sharing based on environment variables
+ * Railway-compatible configuration with correct backend URL
  */
 export const corsMiddleware = () => {
-  logger.info("Initializing CORS middleware");
+  console.log("Initializing CORS middleware for Railway deployment");
 
-  // Simple and robust CORS configuration
+  // Allow specific origins including the correct backend URL
+  const allowedOrigins = [
+    "*",
+    "https://frontend-production-metabot.up.railway.app",
+    "https://metalogics-chatbot-production.up.railway.app",
+    "https://bilal.metalogics.io",
+    "https://www.bilal.metalogics.io",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:5174",
+  ];
+
   const corsOptions: CorsOptions = {
     origin: (origin, callback) => {
-      // Log the origin for debugging
-      logger.info("CORS request from origin", { origin });
-
       // Allow requests with no origin (mobile apps, curl, etc.)
       if (!origin) {
+        console.log("CORS: Allowing request with no origin");
         return callback(null, true);
       }
 
       // Allow all Railway domains
       if (origin.includes(".railway.app")) {
-        logger.info("Allowing Railway domain", { origin });
+        console.log(`CORS: Allowing Railway domain: ${origin}`);
         return callback(null, true);
       }
 
       // Allow specific known domains
-      const allowedDomains = [
-        "https://frontend-production-metabot.up.railway.app",
-        "https://bilal.metalogics.io",
-        "https://www.bilal.metalogics.io",
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:5174",
-      ];
-
-      if (allowedDomains.includes(origin)) {
-        logger.info("Allowing known domain", { origin });
+      if (allowedOrigins.includes(origin)) {
+        console.log(`CORS: Allowing known domain: ${origin}`);
         return callback(null, true);
       }
 
-      // Check config origins (with fallback)
-      try {
-        const configOrigins = config?.cors?.allowedOrigins || ["*"];
-        if (configOrigins.includes("*") || configOrigins.includes(origin)) {
-          logger.info("Allowing configured origin", { origin });
-          return callback(null, true);
-        }
-      } catch (error) {
-        logger.warn("Error checking config origins, allowing request", {
-          error: error.message,
-        });
-        return callback(null, true);
-      }
-
-      // Default: allow the request (permissive for debugging)
-      logger.warn("Unknown origin, but allowing for debugging", { origin });
+      // For debugging, allow all origins temporarily
+      console.log(`CORS: Allowing origin for debugging: ${origin}`);
       return callback(null, true);
     },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "x-api-key"],
     credentials: true,
-    maxAge: 86400, // 24 hours
+    maxAge: 86400,
     optionsSuccessStatus: 200,
   };
 
-  logger.info("CORS middleware configured successfully");
+  console.log("CORS middleware configured with Railway-compatible settings");
+  console.log("Allowed origins:", allowedOrigins);
   return cors(corsOptions);
 };
