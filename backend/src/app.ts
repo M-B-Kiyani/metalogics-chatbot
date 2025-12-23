@@ -1,4 +1,6 @@
 import express, { Application, Request, Response } from "express";
+import helmet from "helmet";
+import compression from "compression";
 import { BookingController } from "./controllers/booking.controller";
 import { HealthController } from "./controllers/health.controller";
 import { AvailableSlotsController } from "./controllers/availableSlots.controller";
@@ -46,7 +48,15 @@ export const createApp = (
   // Middleware Stack (order is important!)
   // ============================================
 
-  // 1. CORS - Must be first to handle preflight requests
+  // 0. Security Headers - Helmet
+  app.use(helmet());
+  logger.debug("Helmet middleware configured");
+
+  // 1. Compression - Compress response bodies
+  app.use(compression());
+  logger.debug("Compression middleware configured");
+
+  // 2. CORS - Must be first to handle preflight requests
   app.use(corsMiddleware());
   logger.debug("CORS middleware configured");
 

@@ -52,12 +52,14 @@
     "@prisma/client": "^6.19.0",
     "@types/ws": "^8.18.1",
     "axios": "^1.13.2",
+    "compression": "^1.7.5",
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "googleapis": "^166.0.0",
+    "helmet": "^8.0.0",
     "node-cache": "^5.1.2",
     "nodemailer": "^7.0.10",
     "prisma": "^6.19.0",
@@ -72,6 +74,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@types/compression": "^1.7.5",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
