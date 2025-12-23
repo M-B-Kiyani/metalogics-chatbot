@@ -1,5 +1,6 @@
 import { WebSocket } from "ws";
 import { geminiService } from "./gemini.service";
+import { knowledgeService } from "./knowledge.service";
 import { logger } from "../utils/logger";
 import { ConversationService } from "./conversation.service";
 import { VoiceFunctionsService } from "./voice-functions.service";
@@ -286,9 +287,33 @@ export class RetellLLMService {
       }
 
       // Generate response using Gemini with streaming
+      
+      let messageToSend = userMessage;
+      
+      // Try RAG retrieval for general queries (if not in booking flow)
+      // Check for question words or general inquiry characteristics
+      const isQuestion = /^(what|how|who|where|when|why|can you|do you)/i.test(userMessage) || userMessage.endsWith("?");
+      
+      if (isQuestion) {
+        try {
+          const ragContext = await knowledgeService.retrieveRelevantContext(userMessage);
+          if (ragContext) {
+            logger.info("Enriching voice response with RAG context", { sessionId });
+            messageToSend = `Using the following context, answer the user's question briefly and conversationally (optimized for voice).
+            
+Context:
+${ragContext}
+
+User Question: ${userMessage}`;
+          }
+        } catch (err) {
+          logger.warn("RAG retrieval failed for voice", { error: err });
+        }
+      }
+
       const stream = await geminiService.sendMessageStream(
         sessionId,
-        userMessage
+        messageToSend
       );
 
       let fullResponse = "";

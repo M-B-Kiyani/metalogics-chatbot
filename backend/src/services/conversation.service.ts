@@ -1,5 +1,6 @@
 import { BookingService } from "./booking.service";
 import { geminiService } from "./gemini.service";
+import { knowledgeService } from "./knowledge.service";
 import { logger } from "../utils/logger";
 
 export interface ConversationContext {
@@ -41,7 +42,7 @@ export class ConversationService {
     this.useGemini = geminiService.isAvailable();
 
     if (this.useGemini) {
-      logger.info("ConversationService initialized with Gemini AI");
+      logger.info("ConversationService initialized with Gemini AI and RAG");
     } else {
       logger.warn(
         "ConversationService initialized with fallback responses (Gemini not available)"
@@ -74,7 +75,26 @@ export class ConversationService {
 
     if (this.useGemini) {
       try {
-        response = await geminiService.sendMessage(sessionId, message);
+        let messageToSend = message;
+
+        // RAG Retrieval
+        // Only perform RAG for general inquiries or if intent is unclear/general/inquiry
+        // Don't distract purely booking flows unless needed, but generally good to have context.
+        if (!context.currentIntent || context.currentIntent === "inquiry" || context.currentIntent === "general") {
+           const ragContext = await knowledgeService.retrieveRelevantContext(message);
+           
+           if (ragContext) {
+             logger.info("Enriching prompt with RAG context", { sessionId });
+             messageToSend = `Using the following context, answer the user's question. If the answer is not in the context, use your general knowledge but mention you aren't certain.
+             
+Context:
+${ragContext}
+
+User Question: ${message}`;
+           }
+        }
+
+        response = await geminiService.sendMessage(sessionId, messageToSend);
       } catch (error) {
         logger.error("Gemini error, falling back to rule-based response", {
           error,
@@ -85,7 +105,7 @@ export class ConversationService {
       response = await this.generateResponse(context, message);
     }
 
-    // Add assistant response to history
+    // Add assistant response to history (clean, user sees only the response)
     context.conversationHistory.push({
       role: "assistant",
       content: response,
