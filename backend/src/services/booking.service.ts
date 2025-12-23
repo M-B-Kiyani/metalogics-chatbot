@@ -861,9 +861,9 @@ export class BookingService {
 
     if (config.googleCalendar.enabled) {
       try {
-        // Create a promise that rejects after 5 seconds
+        // Create a promise that rejects after 3 seconds (reduced from 5)
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error("Calendar API timed out")), 5000);
+          setTimeout(() => reject(new Error("Calendar API timed out")), 3000);
         });
 
         // Race the calendar service against the timeout
@@ -871,33 +871,36 @@ export class BookingService {
           this.calendarService.getAvailableSlots(startDate, endDate, duration),
           timeoutPromise,
         ])) as Array<{ startTime: Date; endTime: Date; duration: number }>;
-      } catch (error) {
-        logger.error("Failed to get available slots from calendar, falling back to local logic", {
-          error: error instanceof Error ? error.message : String(error),
+
+        logger.info("Calendar service returned slots successfully", {
+          slotsCount: availableSlots.length,
         });
-        
-        // Fallback: If calendar service fails, generate slots based on business hours only
-        const businessHours = this.calendarService.getBusinessHours();
-        availableSlots = await this.calendarService.getAvailableSlots(
+      } catch (error) {
+        logger.warn(
+          "Calendar service failed or timed out, using fallback logic",
+          {
+            error: error instanceof Error ? error.message : String(error),
+          }
+        );
+
+        // Fallback: Generate basic slots based on business hours only
+        availableSlots = this.generateBasicAvailableSlots(
           startDate,
           endDate,
-          duration,
-          businessHours
+          duration
         );
       }
     } else {
-      // If calendar is not enabled, generate slots based on business hours only
-      // and filter by database bookings
-      const businessHours = this.calendarService.getBusinessHours();
-      availableSlots = await this.calendarService.getAvailableSlots(
+      logger.info("Google Calendar disabled, using basic slot generation");
+      // Generate basic slots based on business hours only
+      availableSlots = this.generateBasicAvailableSlots(
         startDate,
         endDate,
-        duration,
-        businessHours
+        duration
       );
     }
 
-    // Get database bookings in the date range to double-check availability
+    // Get database bookings in the date range to filter out conflicts
     const bookings = await this.bookingRepository.findMany({
       dateFrom: startDate,
       dateTo: endDate,
@@ -936,6 +939,79 @@ export class BookingService {
     });
 
     return finalAvailableSlots;
+  }
+
+  /**
+   * Generate basic available slots based on business hours only
+   * Used as fallback when calendar service is unavailable
+   */
+  private generateBasicAvailableSlots(
+    startDate: Date,
+    endDate: Date,
+    duration: number
+  ): Array<{ startTime: Date; endTime: Date; duration: number }> {
+    const slots: Array<{ startTime: Date; endTime: Date; duration: number }> =
+      [];
+    const businessHours = config.bookingRules.businessHours;
+    const bufferMinutes = config.bookingRules.bufferMinutes;
+    const minAdvanceHours = config.bookingRules.minAdvanceHours;
+    const maxAdvanceHours = config.bookingRules.maxAdvanceHours;
+
+    const now = new Date();
+    const minBookingTime = new Date(
+      now.getTime() + minAdvanceHours * 60 * 60 * 1000
+    );
+    const maxBookingTime = new Date(
+      now.getTime() + maxAdvanceHours * 60 * 60 * 1000
+    );
+
+    // Iterate through each day in the range
+    const currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+      const dayOfWeek = currentDate.getDay();
+
+      // Check if this day is a business day
+      if (businessHours.daysOfWeek.includes(dayOfWeek)) {
+        // Generate slots for this day
+        const dayStart = new Date(currentDate);
+        dayStart.setHours(businessHours.startHour, 0, 0, 0);
+
+        const dayEnd = new Date(currentDate);
+        dayEnd.setHours(businessHours.endHour, 0, 0, 0);
+
+        // Generate slots within business hours
+        const slotStart = new Date(dayStart);
+        while (slotStart.getTime() + duration * 60 * 1000 <= dayEnd.getTime()) {
+          const slotEnd = new Date(slotStart.getTime() + duration * 60 * 1000);
+
+          // Check if slot is within booking time limits
+          if (slotStart >= minBookingTime && slotStart <= maxBookingTime) {
+            slots.push({
+              startTime: new Date(slotStart),
+              endTime: new Date(slotEnd),
+              duration,
+            });
+          }
+
+          // Move to next slot (duration + buffer)
+          slotStart.setTime(
+            slotStart.getTime() + (duration + bufferMinutes) * 60 * 1000
+          );
+        }
+      }
+
+      // Move to next day
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    logger.info("Generated basic available slots", {
+      slotsCount: slots.length,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      duration,
+    });
+
+    return slots;
   }
 
   /**

@@ -3,6 +3,55 @@ import { AvailableSlotsController } from "../controllers/availableSlots.controll
 import { validateQuery } from "../middleware/validation.middleware";
 import { rateLimiter } from "../middleware/rateLimit.middleware";
 import { availableSlotsQuerySchema } from "../dto/booking.dto";
+import { Request, Response, NextFunction } from "express";
+import { AppError } from "../errors";
+import { logger } from "../utils/logger";
+
+/**
+ * Custom timeout middleware for available slots (10 seconds instead of 30)
+ */
+const availableSlotsTimeout = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const timeoutMs = 10000; // 10 seconds
+
+  const timeoutId = setTimeout(() => {
+    if (res.headersSent) {
+      return;
+    }
+
+    logger.warn("Available slots request timeout", {
+      method: req.method,
+      path: req.path,
+      timeout: timeoutMs,
+      query: req.query,
+    });
+
+    const error = new AppError(
+      504,
+      `Available slots request timeout after ${timeoutMs}ms`,
+      "REQUEST_TIMEOUT",
+      true
+    );
+
+    res.status(504).json({
+      success: false,
+      error: {
+        statusCode: 504,
+        message: error.message,
+        errorCode: error.errorCode,
+        timestamp: error.timestamp,
+      },
+    });
+  }, timeoutMs);
+
+  res.on("finish", () => clearTimeout(timeoutId));
+  res.on("close", () => clearTimeout(timeoutId));
+
+  next();
+};
 
 /**
  * Create available slots routes with all middleware applied
@@ -108,6 +157,7 @@ export const createAvailableSlotsRoutes = (
    */
   router.get(
     "/",
+    availableSlotsTimeout,
     validateQuery(availableSlotsQuerySchema),
     availableSlotsController.getAvailableSlots
   );
