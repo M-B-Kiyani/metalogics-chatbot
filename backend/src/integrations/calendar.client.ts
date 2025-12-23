@@ -123,12 +123,12 @@ export class CalendarClient {
       });
 
       // Verify authentication by getting access token
-      await this.auth.authorize();
+      await this.auth!.authorize();
 
       // Initialize calendar API client
       this.calendar = google.calendar({
         version: "v3",
-        auth: this.auth,
+        auth: this.auth!,
       });
 
       this.initialized = true;
@@ -291,8 +291,8 @@ export class CalendarClient {
 
       // Map Google Calendar events to our CalendarEvent interface
       return events
-        .filter((event) => event.start?.dateTime && event.end?.dateTime)
-        .map((event) => ({
+        .filter((event: calendar_v3.Schema$Event) => event.start?.dateTime && event.end?.dateTime)
+        .map((event: calendar_v3.Schema$Event) => ({
           id: event.id!,
           summary: event.summary || "Untitled Event",
           description: event.description || undefined,
@@ -304,7 +304,7 @@ export class CalendarClient {
             dateTime: event.end!.dateTime!,
             timeZone: event.end!.timeZone || config.googleCalendar.timeZone,
           },
-          attendees: event.attendees?.map((attendee) => ({
+          attendees: event.attendees?.map((attendee: calendar_v3.Schema$EventAttendee) => ({
             email: attendee.email!,
             responseStatus: attendee.responseStatus || undefined,
           })),
@@ -416,7 +416,7 @@ export class CalendarClient {
           timeZone:
             createdEvent.end!.timeZone || config.googleCalendar.timeZone,
         },
-        attendees: createdEvent.attendees?.map((attendee) => ({
+        attendees: createdEvent.attendees?.map((attendee: calendar_v3.Schema$EventAttendee) => ({
           email: attendee.email!,
           responseStatus: attendee.responseStatus || undefined,
         })),
@@ -549,7 +549,7 @@ export class CalendarClient {
           dateTime: updated.end!.dateTime!,
           timeZone: updated.end!.timeZone || config.googleCalendar.timeZone,
         },
-        attendees: updated.attendees?.map((attendee) => ({
+        attendees: updated.attendees?.map((attendee: calendar_v3.Schema$EventAttendee) => ({
           email: attendee.email!,
           responseStatus: attendee.responseStatus || undefined,
         })),

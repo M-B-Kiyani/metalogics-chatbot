@@ -15,7 +15,7 @@ const availableSlotsTimeout = (
   res: Response,
   next: NextFunction
 ): void => {
-  const timeoutMs = 3000; // 3 seconds
+  const timeoutMs = 30000; // 30 seconds
 
   const timeoutId = setTimeout(() => {
     if (res.headersSent) {

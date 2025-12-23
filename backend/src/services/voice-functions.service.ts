@@ -231,11 +231,11 @@ export class VoiceFunctionsService {
 
       // Get the existing booking to preserve duration
       const existingBooking = await this.bookingService.getBookingById(
-        targetBookingId
+        targetBookingId!
       );
 
       // Update booking (this also updates calendar event)
-      await this.bookingService.updateBooking(targetBookingId, {
+      await this.bookingService.updateBooking(targetBookingId!, {
         timeSlot: {
           startTime: newStartTime,
           duration: existingBooking.duration as 15 | 30 | 45 | 60,
@@ -246,7 +246,7 @@ export class VoiceFunctionsService {
       try {
         await this.crmService.updateContactBookingStatus(
           email,
-          targetBookingId,
+          targetBookingId!,
           "CONFIRMED"
         );
       } catch (crmError) {
@@ -321,13 +321,13 @@ export class VoiceFunctionsService {
       }
 
       // Cancel booking (this also deletes calendar event)
-      await this.bookingService.cancelBooking(targetBookingId);
+      await this.bookingService.cancelBooking(targetBookingId!);
 
       // Update CRM status
       try {
         await this.crmService.updateContactBookingStatus(
           email,
-          targetBookingId,
+          targetBookingId!,
           "CANCELLED"
         );
       } catch (crmError) {
