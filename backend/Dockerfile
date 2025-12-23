@@ -29,7 +29,7 @@ RUN npx prisma generate
 EXPOSE $PORT
 
 # Health check script that uses PORT environment variable
-RUN echo '#!/bin/sh\ncurl -f http://127.0.0.1:${PORT:-3000}/health || exit 1' > /healthcheck.sh && chmod +x /healthcheck.sh
+RUN echo '#!/bin/sh\ncurl -f http://0.0.0.0:${PORT:-3000}/health || exit 1' > /healthcheck.sh && chmod +x /healthcheck.sh
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \

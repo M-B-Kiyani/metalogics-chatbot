@@ -18,6 +18,8 @@
     "start:frontend": "npm start --prefix frontend",
     "start:widget": "npm start --prefix widget",
     "validate": "node validate-deployment.js",
+    "validate:production": "node validate-production-config.js",
+    "deploy:railway": "node deploy-to-railway.js",
     "clean": "rm -rf backend/node_modules frontend/node_modules widget/node_modules backend/dist frontend/dist widget/dist"
   },
   "keywords": [

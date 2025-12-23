@@ -861,15 +861,16 @@ export class BookingService {
 
     if (config.googleCalendar.enabled) {
       try {
-        availableSlots = await withTimeout(
-          this.calendarService.getAvailableSlots(
-            startDate,
-            endDate,
-            duration
-          ),
-          5000, // 5 second timeout for calendar
-          "Calendar API timed out"
-        );
+        // Create a promise that rejects after 5 seconds
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error("Calendar API timed out")), 5000);
+        });
+
+        // Race the calendar service against the timeout
+        availableSlots = (await Promise.race([
+          this.calendarService.getAvailableSlots(startDate, endDate, duration),
+          timeoutPromise,
+        ])) as Array<{ startTime: Date; endTime: Date; duration: number }>;
       } catch (error) {
         logger.error("Failed to get available slots from calendar, falling back to local logic", {
           error: error instanceof Error ? error.message : String(error),
