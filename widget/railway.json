@@ -3,10 +3,8 @@
     "builder": "DOCKERFILE"
   },
   "deploy": {
-    "startCommand": "npx serve -s dist -l $PORT",
+    "startCommand": "sh -c 'npx serve -s dist -l $PORT --cors'",
     "healthCheckPath": "/",
-    "healthCheckTimeout": 100,
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
+    "healthCheckTimeout": 100
   }
 }
