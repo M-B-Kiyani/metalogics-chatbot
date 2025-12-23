@@ -39,8 +39,8 @@ ALLOWED_ORIGINS=https://frontend-production-metabot.up.railway.app,https://metal
 
 ```bash
 # Google Calendar
-GOOGLE_CALENDAR_ENABLED=false
-GOOGLE_SERVICE_ACCOUNT_KEY=
+GOOGLE_CALENDAR_ENABLED=true
+GOOGLE_SERVICE_ACCOUNT_KEY={"type":"service_account",...}  # Your full JSON key
 GOOGLE_CALENDAR_ID=primary
 
 # HubSpot CRM

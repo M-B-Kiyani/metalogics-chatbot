@@ -18,8 +18,7 @@ RUN npm run build
 # Clean up devDependencies to reduce image size
 RUN npm prune --production
 
-# Install serve globally
-RUN npm install -g serve@14.2.1
+
 
 # Railway injects PORT, default to 3000
 ENV PORT=3000
@@ -32,4 +31,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:$PORT/metalogics-chatbot.iife.js || exit 1
 
 # Serve widget statically with proper binding
-CMD ["sh", "-c", "serve -s dist -l ${PORT:-3000} --cors"]
+CMD ["npm", "run", "start:prod"]
