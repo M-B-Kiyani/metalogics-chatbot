@@ -3,6 +3,7 @@ import { Message, Role } from "../types";
 import { WidgetConfig } from "../config";
 import { chatStorage } from "../storage";
 import Loader from "./Loader";
+import BookingModal from "./BookingModal";
 
 interface UnifiedChatWidgetProps {
   config: WidgetConfig;
@@ -16,10 +17,12 @@ declare global {
 
 const UnifiedChatWidget: React.FC<UnifiedChatWidgetProps> = ({ config }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
+
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState<string>("");
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -347,6 +350,27 @@ const UnifiedChatWidget: React.FC<UnifiedChatWidgetProps> = ({ config }) => {
             <div className="flex items-center space-x-2">
               <button
                 type="button"
+                onClick={() => setIsBookingModalOpen(true)}
+                className="metalogics-icon-button"
+                aria-label="Book Appointment"
+                title="Book Appointment"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
                 onClick={handleClearChat}
                 className="metalogics-icon-button"
                 aria-label="Clear chat"
@@ -517,6 +541,12 @@ const UnifiedChatWidget: React.FC<UnifiedChatWidgetProps> = ({ config }) => {
           </div>
         </div>
       )}
+      <BookingModal
+        config={config}
+        isOpen={isBookingModalOpen}
+        onClose={() => setIsBookingModalOpen(false)}
+        brandColor={brandColor}
+      />
     </>
   );
 };
