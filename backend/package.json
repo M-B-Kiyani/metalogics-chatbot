@@ -4,9 +4,9 @@
   "description": "Backend API for Metalogics AI Assistant booking system",
   "main": "dist/server.js",
   "scripts": {
-    "build": "npx prisma generate && npx prisma db push --force-reset && tsc && npm run setup:knowledge",
+    "build": "npx prisma generate && tsc && npm run setup:knowledge",
     "setup:knowledge": "ts-node scripts/setup-knowledge.ts",
-    "start": "node dist/server.js",
+    "start": "npx prisma db push && node dist/server.js",
     "dev": "ts-node src/server.ts",
     "test": "jest",
     "test:watch": "jest --watch",
