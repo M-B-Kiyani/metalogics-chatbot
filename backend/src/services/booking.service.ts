@@ -846,123 +846,84 @@ export class BookingService {
     endDate: Date,
     duration: number
   ): Promise<Array<{ startTime: Date; endTime: Date; duration: number }>> {
-    logger.info("Getting available time slots", {
+    logger.info("Getting available time slots (simplified)", {
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
       duration,
     });
 
-    // Get available slots from calendar service (if enabled)
-    let availableSlots: Array<{
-      startTime: Date;
-      endTime: Date;
-      duration: number;
-    }> = [];
-
-    if (config.googleCalendar.enabled) {
-      try {
-        // Create a promise that rejects after 3 seconds (reduced from 5)
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error("Calendar API timed out")), 3000);
-        });
-
-        // Race the calendar service against the timeout
-        availableSlots = (await Promise.race([
-          this.calendarService.getAvailableSlots(startDate, endDate, duration),
-          timeoutPromise,
-        ])) as Array<{ startTime: Date; endTime: Date; duration: number }>;
-
-        logger.info("Calendar service returned slots successfully", {
-          slotsCount: availableSlots.length,
-        });
-      } catch (error) {
-        logger.warn(
-          "Calendar service failed or timed out, using fallback logic",
-          {
-            error: error instanceof Error ? error.message : String(error),
-          }
-        );
-
-        // Fallback: Generate basic slots based on business hours only
-        availableSlots = this.generateBasicAvailableSlots(
-          startDate,
-          endDate,
-          duration
-        );
-      }
-    } else {
-      logger.info("Google Calendar disabled, using basic slot generation");
-      // Generate basic slots based on business hours only
-      availableSlots = this.generateBasicAvailableSlots(
+    try {
+      // Always start with basic slot generation for reliability
+      const availableSlots = this.generateBasicAvailableSlots(
         startDate,
         endDate,
         duration
       );
-    }
 
-    // Get database bookings in the date range to filter out conflicts (with timeout)
-    let bookings: any[] = [];
-    try {
-      const bookingQueryPromise = this.bookingRepository.findMany({
-        dateFrom: startDate,
-        dateTo: endDate,
-        limit: 100, // Reduced limit for faster query
+      logger.info("Basic slots generated", {
+        slotsCount: availableSlots.length,
       });
 
-      const bookingTimeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Database query timed out")), 2000);
+      // Try to get database bookings with a very short timeout
+      let bookings: any[] = [];
+      try {
+        // Set a very aggressive timeout for database query
+        const bookingPromise = this.bookingRepository.findMany({
+          dateFrom: startDate,
+          dateTo: endDate,
+          limit: 50, // Further reduced limit
+        });
+
+        bookings = (await Promise.race([
+          bookingPromise,
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("DB timeout")), 500)
+          ),
+        ])) as any[];
+
+        logger.info("Database bookings retrieved", {
+          bookingsCount: bookings.length,
+        });
+      } catch (error) {
+        logger.warn(
+          "Database query failed, proceeding without booking filter",
+          {
+            error: error instanceof Error ? error.message : String(error),
+          }
+        );
+        // Continue with empty bookings array
+      }
+
+      // Filter out conflicting slots
+      const finalSlots = availableSlots.filter((slot) => {
+        return !bookings.some((booking) => {
+          if (booking.status === "CANCELLED") return false;
+
+          const bookingEnd = new Date(
+            booking.startTime.getTime() + booking.duration * 60 * 1000
+          );
+
+          return (
+            slot.startTime < bookingEnd && slot.endTime > booking.startTime
+          );
+        });
       });
 
-      bookings = (await Promise.race([
-        bookingQueryPromise,
-        bookingTimeoutPromise,
-      ])) as any[];
-
-      logger.info("Database bookings retrieved successfully", {
-        bookingsCount: bookings.length,
+      logger.info("Available slots calculated successfully", {
+        totalGenerated: availableSlots.length,
+        finalAvailable: finalSlots.length,
+        filteredOut: availableSlots.length - finalSlots.length,
       });
+
+      return finalSlots;
     } catch (error) {
-      logger.warn(
-        "Database query failed or timed out, proceeding without booking filter",
-        {
-          error: error instanceof Error ? error.message : String(error),
-        }
-      );
-      bookings = []; // Empty array means no conflicts to filter
-    }
-
-    // Filter out slots that conflict with database bookings
-    const finalAvailableSlots = availableSlots.filter((slot) => {
-      const hasConflict = bookings.some((booking) => {
-        if (booking.status === "CANCELLED") {
-          return false;
-        }
-
-        const bookingEndTime = new Date(
-          booking.startTime.getTime() + booking.duration * 60 * 1000
-        );
-
-        // Check for overlap
-        return (
-          (slot.startTime >= booking.startTime &&
-            slot.startTime < bookingEndTime) ||
-          (slot.endTime > booking.startTime &&
-            slot.endTime <= bookingEndTime) ||
-          (slot.startTime <= booking.startTime &&
-            slot.endTime >= bookingEndTime)
-        );
+      logger.error("Error in getAvailableTimeSlots", {
+        error: error instanceof Error ? error.message : String(error),
       });
 
-      return !hasConflict;
-    });
-
-    logger.info("Available time slots calculated", {
-      totalSlots: availableSlots.length,
-      availableAfterDbFilter: finalAvailableSlots.length,
-      databaseBookings: bookings.length,
-    });
-
-    return finalAvailableSlots;
+      // Fallback: return basic slots without any filtering
+      return this.generateBasicAvailableSlots(startDate, endDate, duration);
+    }
   }
 
   /**
