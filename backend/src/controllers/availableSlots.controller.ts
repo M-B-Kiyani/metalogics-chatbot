@@ -120,7 +120,7 @@ export class AvailableSlotsController {
         slots = await Promise.race([
           slotsPromise,
           new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Service timeout")), 25000)
+            setTimeout(() => reject(new Error("Service timeout")), 5000)
           ),
         ]);
       } catch (error) {
