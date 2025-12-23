@@ -129,7 +129,7 @@ export class CalendarClient {
       this.calendar = google.calendar({
         version: "v3",
         auth: this.auth!,
-      });
+      } as any);
 
       this.initialized = true;
 
