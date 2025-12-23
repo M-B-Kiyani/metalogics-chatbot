@@ -9,8 +9,8 @@ export const corsMiddleware = () => {
 
   // Allow specific origins including the correct backend URL
   const allowedOrigins = [
-    "*",
     "https://frontend-production-metabot.up.railway.app",
+    "https://latest-chatbot-production.up.railway.app",
     "https://metalogics-chatbot-production.up.railway.app",
     "https://bilal.metalogics.io",
     "https://www.bilal.metalogics.io",
