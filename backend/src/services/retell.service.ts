@@ -79,8 +79,10 @@ export class RetellService {
     agentId: string;
     metadata?: Record<string, any>;
   }) {
+    this.ensureConfigured();
+
     try {
-      const response = await this.client.call.createPhoneCall({
+      const response = await this.client!.call.createPhoneCall({
         from_number: params.fromNumber,
         to_number: params.toNumber,
         override_agent_id: params.agentId,
@@ -108,8 +110,10 @@ export class RetellService {
    * Get call details
    */
   async getCall(callId: string) {
+    this.ensureConfigured();
+
     try {
-      const call = await this.client.call.retrieve(callId);
+      const call = await this.client!.call.retrieve(callId);
       return call;
     } catch (error) {
       logger.error("Failed to retrieve call", {
@@ -124,8 +128,10 @@ export class RetellService {
    * List all calls
    */
   async listCalls(limit?: number) {
+    this.ensureConfigured();
+
     try {
-      const calls = await this.client.call.list({
+      const calls = await this.client!.call.list({
         limit: limit || 100,
       });
       return calls;
@@ -141,8 +147,10 @@ export class RetellService {
    * Get agent details
    */
   async getAgent(agentId: string) {
+    this.ensureConfigured();
+
     try {
-      const agent = await this.client.agent.retrieve(agentId);
+      const agent = await this.client!.agent.retrieve(agentId);
       return agent;
     } catch (error) {
       logger.error("Failed to retrieve agent", {
@@ -157,8 +165,10 @@ export class RetellService {
    * Update agent configuration
    */
   async updateAgent(agentId: string, updates: any) {
+    this.ensureConfigured();
+
     try {
-      const agent = await this.client.agent.update(agentId, updates);
+      const agent = await this.client!.agent.update(agentId, updates);
       logger.info("Agent updated", { agentId });
       return agent;
     } catch (error) {
@@ -173,7 +183,7 @@ export class RetellService {
   /**
    * Get the Retell client instance for advanced usage
    */
-  getClient(): Retell {
+  getClient(): Retell | null {
     return this.client;
   }
 }
