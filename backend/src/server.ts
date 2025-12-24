@@ -1,6 +1,7 @@
 /**
  * Server entry point
  * Initializes database connection, starts Express server, and handles graceful shutdown
+ * Updated: Database connection fix for Railway deployment
  */
 
 import { Server } from "http";
@@ -36,6 +37,8 @@ import { withTimeout } from "./utils/timeout";
 const PORT = config.server.port;
 const NODE_ENV = config.server.nodeEnv;
 const VERSION = process.env.npm_package_version || "1.0.0";
+
+// Force redeploy trigger - DB fix attempt
 
 // Server instance
 let server: Server | undefined = undefined;
