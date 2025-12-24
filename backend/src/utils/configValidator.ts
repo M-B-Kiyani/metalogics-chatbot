@@ -588,6 +588,26 @@ export function printDetailedConfigSummary(): void {
     );
   }
 
+  // Retell AI
+  console.log("\n🎙️ Retell AI Voice:");
+  console.log(
+    `   Status: ${config.retell.enabled ? "✓ Enabled" : "✗ Disabled"}`
+  );
+  if (config.retell.enabled) {
+    console.log(
+      `   API Key: ${config.retell.apiKey ? "Configured" : "Not configured"}`
+    );
+    console.log(
+      `   Agent ID: ${config.retell.agentId ? "Configured" : "Not configured"}`
+    );
+  }
+
+  // Gemini AI
+  console.log("\n🤖 Gemini AI:");
+  console.log(
+    `   API Key: ${config.gemini.apiKey ? "✓ Configured" : "✗ Not configured"}`
+  );
+
   // Booking Rules
   console.log("\n📋 Booking Rules:");
   console.log(

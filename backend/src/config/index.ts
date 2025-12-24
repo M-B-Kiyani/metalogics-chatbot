@@ -129,6 +129,13 @@ export interface RetellConfig {
 }
 
 /**
+ * Gemini AI configuration interface
+ */
+export interface GeminiConfig {
+  apiKey: string;
+}
+
+/**
  * Duration-specific frequency rule
  */
 export interface DurationFrequencyRule {
@@ -170,6 +177,7 @@ export interface AppConfig {
   hubspot: HubSpotConfig;
   bookingRules: BookingRulesConfig;
   retell: RetellConfig;
+  gemini: GeminiConfig;
 }
 
 /**
@@ -311,6 +319,9 @@ const envSchema = z.object({
   RETELL_ENABLED: z.string().optional(),
   Custom_LLM_URL: z.string().optional(),
   Agent_Level_Webhook_URL: z.string().optional(),
+
+  // Gemini AI
+  GEMINI_API_KEY: z.string().optional(),
 
   // Booking Rules
   MAX_BOOKINGS_PER_EMAIL: z
@@ -522,6 +533,15 @@ function buildRetellConfig(): RetellConfig {
 }
 
 /**
+ * Build Gemini AI configuration
+ */
+function buildGeminiConfig(): GeminiConfig {
+  return {
+    apiKey: env.GEMINI_API_KEY || "",
+  };
+}
+
+/**
  * Build booking rules configuration
  */
 function buildBookingRulesConfig(): BookingRulesConfig {
@@ -582,6 +602,7 @@ function buildConfig(): AppConfig {
     hubspot: buildHubSpotConfig(),
     bookingRules: buildBookingRulesConfig(),
     retell: buildRetellConfig(),
+    gemini: buildGeminiConfig(),
   };
 }
 

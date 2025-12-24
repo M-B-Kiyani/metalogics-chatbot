@@ -2,7 +2,7 @@ import { config } from "../config";
 import { logger } from "../utils/logger";
 import fetch from "node-fetch"; // Assuming node-fetch is available or I should use native fetch in Node 18+
 
-// Node 18+ has native fetch, so we might not need import. 
+// Node 18+ has native fetch, so we might not need import.
 // If it fails, I'll switch to axios (which is in package.json)
 
 export interface EmbeddingResult {
@@ -17,7 +17,7 @@ export class EmbeddingService {
   private cache: Map<string, number[]> = new Map();
 
   constructor() {
-    this.apiKey = process.env.GEMINI_API_KEY || config.auth.apiKey || null; // Fallback logic
+    this.apiKey = config.gemini.apiKey || null;
     if (!this.apiKey) {
       logger.warn("Embedding API key not configured");
     }
@@ -40,7 +40,7 @@ export class EmbeddingService {
 
     try {
       const url = `${this.baseUrl}/models/${this.model}:embedContent?key=${this.apiKey}`;
-      
+
       // Use native fetch (Node 18+)
       const response = await fetch(url, {
         method: "POST",
@@ -56,11 +56,13 @@ export class EmbeddingService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        logger.error(`Embedding API error: ${response.status}`, { error: errorText });
+        logger.error(`Embedding API error: ${response.status}`, {
+          error: errorText,
+        });
         return null;
       }
 
-      const result = await response.json() as any;
+      const result = (await response.json()) as any;
 
       if (result.embedding && result.embedding.values) {
         const embedding = result.embedding.values;

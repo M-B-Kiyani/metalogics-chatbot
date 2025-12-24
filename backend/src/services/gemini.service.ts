@@ -1,4 +1,5 @@
 import { GoogleGenAI, Chat } from "@google/genai";
+import { config } from "../config";
 import { logger } from "../utils/logger";
 
 const SYSTEM_PROMPT = `# Metalogics AI Assistant — Enhanced Voice Integration with Calendar & CRM
@@ -262,8 +263,7 @@ export class GeminiService {
   private sessions: Map<string, Chat> = new Map();
 
   constructor() {
-    const apiKey =
-      process.env.GEMINI_API_KEY || process.env.VITE_GOOGLE_API_KEY;
+    const apiKey = config.gemini.apiKey;
 
     if (!apiKey) {
       logger.error("Gemini API key not configured");
