@@ -30,10 +30,10 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
     setError(null);
 
     try {
-      // Fetch slots for the next 7 days
+      // Fetch slots for the next 3 days
       const startDate = new Date();
       const endDate = new Date();
-      endDate.setDate(endDate.getDate() + 7);
+      endDate.setDate(endDate.getDate() + 3);
 
       const data = await getAvailableSlots(
         startDate,
