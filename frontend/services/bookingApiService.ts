@@ -236,31 +236,68 @@ export async function getAvailableSlots(
       duration: duration.toString(),
     });
 
-    const response = await fetch(
-      `${API_BASE_URL}/api/bookings/available-slots?${params}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          ...(API_KEY && { Authorization: `Bearer ${API_KEY}` }),
-        },
-      }
-    );
+    // Try the main endpoint first with a shorter timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      const errorData = data as ErrorResponse;
-      throw new ApiError(
-        errorData.error.statusCode,
-        errorData.error.errorCode,
-        errorData.error.message,
-        errorData.error.details
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/bookings/available-slots?${params}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(API_KEY && { Authorization: `Bearer ${API_KEY}` }),
+          },
+          signal: controller.signal,
+        }
       );
-    }
 
-    const successData = data as SuccessResponse<AvailableSlotsData>;
-    return successData.data;
+      clearTimeout(timeoutId);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const errorData = data as ErrorResponse;
+        throw new ApiError(
+          errorData.error.statusCode,
+          errorData.error.errorCode,
+          errorData.error.message,
+          errorData.error.details
+        );
+      }
+
+      const successData = data as SuccessResponse<AvailableSlotsData>;
+      return successData.data;
+    } catch (mainError) {
+      clearTimeout(timeoutId);
+
+      // If main endpoint fails, try the simple fallback endpoint
+      console.warn("Main slots endpoint failed, trying fallback:", mainError);
+
+      try {
+        const fallbackResponse = await fetch(
+          `${API_BASE_URL}/api/slots-simple`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          console.log("Using fallback slots endpoint");
+          return fallbackData.data;
+        }
+      } catch (fallbackError) {
+        console.warn("Fallback endpoint also failed:", fallbackError);
+      }
+
+      // If both fail, throw the original error
+      throw mainError;
+    }
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
@@ -272,6 +309,11 @@ export async function getAvailableSlots(
         "NETWORK_ERROR",
         "Unable to connect to the booking service. Please check your internet connection and try again."
       );
+    }
+
+    // Handle timeout errors
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new ApiError(504, "TIMEOUT", "Request timeout after 15 seconds");
     }
 
     throw new ApiError(
