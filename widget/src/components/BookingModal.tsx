@@ -49,6 +49,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
   // Fetch slots
   const fetchSlots = async () => {
     setLoading(true);
+    setSlots([]);
     setError(null);
     try {
       // Calculate start and end date (1 day range for simplicity, or maybe 3 days)

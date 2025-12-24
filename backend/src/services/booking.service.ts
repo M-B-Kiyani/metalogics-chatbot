@@ -113,9 +113,13 @@ export class BookingService {
     // Check calendar availability (if calendar integration is enabled)
     if (config.googleCalendar.enabled) {
       try {
-        const isAvailable = await this.calendarService.isSlotAvailable(
-          data.timeSlot.startTime,
-          data.timeSlot.duration
+        const isAvailable = await withTimeout(
+          this.calendarService.isSlotAvailable(
+            data.timeSlot.startTime,
+            data.timeSlot.duration
+          ),
+          5000,
+          "Calendar check timed out"
         );
 
         if (!isAvailable) {
