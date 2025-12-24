@@ -846,7 +846,7 @@ export class BookingService {
     endDate: Date,
     duration: number
   ): Promise<Array<{ startTime: Date; endTime: Date; duration: number }>> {
-    logger.info("Getting available time slots (simplified)", {
+    logger.info("Getting available time slots (optimized)", {
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
       duration,
@@ -864,20 +864,20 @@ export class BookingService {
         slotsCount: availableSlots.length,
       });
 
-      // Try to get database bookings with a very short timeout
+      // Try to get database bookings with timeout
       let bookings: any[] = [];
       try {
-        // Set a very aggressive timeout for database query
+        // Set a reasonable timeout for database query
         const bookingPromise = this.bookingRepository.findMany({
           dateFrom: startDate,
           dateTo: endDate,
-          limit: 50, // Further reduced limit
+          limit: 10, // Very small limit for fast queries
         });
 
         bookings = (await Promise.race([
           bookingPromise,
           new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("DB timeout")), 500)
+            setTimeout(() => reject(new Error("DB timeout")), 2000)
           ),
         ])) as any[];
 
@@ -891,28 +891,33 @@ export class BookingService {
             error: error instanceof Error ? error.message : String(error),
           }
         );
-        // Continue with empty bookings array
+        // Continue with empty bookings array - better to show slots than fail
       }
 
-      // Filter out conflicting slots
-      const finalSlots = availableSlots.filter((slot) => {
-        return !bookings.some((booking) => {
-          if (booking.status === "CANCELLED") return false;
+      // Filter out conflicting slots (only if we got bookings)
+      const finalSlots =
+        bookings.length > 0
+          ? availableSlots.filter((slot) => {
+              return !bookings.some((booking) => {
+                if (booking.status === "CANCELLED") return false;
 
-          const bookingEnd = new Date(
-            booking.startTime.getTime() + booking.duration * 60 * 1000
-          );
+                const bookingEnd = new Date(
+                  booking.startTime.getTime() + booking.duration * 60 * 1000
+                );
 
-          return (
-            slot.startTime < bookingEnd && slot.endTime > booking.startTime
-          );
-        });
-      });
+                return (
+                  slot.startTime < bookingEnd &&
+                  slot.endTime > booking.startTime
+                );
+              });
+            })
+          : availableSlots; // If no bookings retrieved, return all generated slots
 
       logger.info("Available slots calculated successfully", {
         totalGenerated: availableSlots.length,
         finalAvailable: finalSlots.length,
         filteredOut: availableSlots.length - finalSlots.length,
+        hadBookingData: bookings.length > 0,
       });
 
       return finalSlots;

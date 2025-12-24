@@ -87,8 +87,8 @@ export class AvailableSlotsController {
         ]);
       }
 
-      // Validate max date range (30 days)
-      const maxRangeDays = 30;
+      // Validate max date range (7 days for better performance)
+      const maxRangeDays = 7;
       const daysDifference =
         (parsedEndDate.getTime() - parsedStartDate.getTime()) /
         (1000 * 60 * 60 * 24);
@@ -116,11 +116,11 @@ export class AvailableSlotsController {
           parsedDuration
         );
 
-        // Race against a 2-second timeout
+        // Race against a 15-second timeout (increased for production)
         slots = await Promise.race([
           slotsPromise,
           new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Service timeout")), 5000)
+            setTimeout(() => reject(new Error("Service timeout")), 15000)
           ),
         ]);
       } catch (error) {
