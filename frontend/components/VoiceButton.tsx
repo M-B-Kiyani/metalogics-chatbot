@@ -9,16 +9,64 @@ interface VoiceButtonProps {
 
 const VoiceButton: React.FC<VoiceButtonProps> = ({
   onTranscript,
-  agentId = import.meta.env.VITE_RETELL_AGENT_ID ||
-    "your_retell_agent_id_heredb",
+  agentId,
   disabled = false,
 }) => {
   const [isCallActive, setIsCallActive] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isConfigured, setIsConfigured] = useState<boolean | null>(null);
   const retellClientRef = useRef<RetellWebClient | null>(null);
 
+  // Get configuration values
+  const apiBaseUrl =
+    import.meta.env.VITE_API_BASE_URL ||
+    "https://metalogics-chatbot-production.up.railway.app";
+  const configuredAgentId = agentId || import.meta.env.VITE_RETELL_AGENT_ID;
+
+  // Check if voice integration is properly configured
   useEffect(() => {
+    const checkConfiguration = async () => {
+      try {
+        // Check if we have an agent ID
+        if (
+          !configuredAgentId ||
+          configuredAgentId === "your_retell_agent_id_here"
+        ) {
+          setIsConfigured(false);
+          setError("Voice integration not configured");
+          return;
+        }
+
+        // Check if backend supports Retell
+        const response = await fetch(`${apiBaseUrl}/api/retell/health`, {
+          method: "GET",
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setIsConfigured(data.configured === true);
+          if (!data.configured) {
+            setError("Voice service not available");
+          }
+        } else {
+          setIsConfigured(false);
+          setError("Voice service unavailable");
+        }
+      } catch (err) {
+        console.warn("Voice configuration check failed:", err);
+        setIsConfigured(false);
+        setError("Voice service unavailable");
+      }
+    };
+
+    checkConfiguration();
+  }, [apiBaseUrl, configuredAgentId]);
+
+  useEffect(() => {
+    // Only initialize if properly configured
+    if (isConfigured !== true) return;
+
     // Initialize Retell client
     retellClientRef.current = new RetellWebClient();
 
@@ -85,7 +133,7 @@ const VoiceButton: React.FC<VoiceButtonProps> = ({
 
     client.on("error", (error: any) => {
       console.error("Retell error:", error);
-      setError(error.message || "An error occurred");
+      setError(error.message || "Voice call error occurred");
       setIsCallActive(false);
       setIsConnecting(false);
     });
@@ -96,9 +144,14 @@ const VoiceButton: React.FC<VoiceButtonProps> = ({
         retellClientRef.current.stopCall();
       }
     };
-  }, [onTranscript]);
+  }, [onTranscript, isConfigured]);
 
   const startCall = async () => {
+    if (!isConfigured) {
+      setError("Voice integration not available");
+      return;
+    }
+
     try {
       setIsConnecting(true);
       setError(null);
@@ -117,11 +170,10 @@ const VoiceButton: React.FC<VoiceButtonProps> = ({
         );
       }
 
-      const apiBaseUrl =
-        import.meta.env.VITE_API_BASE_URL ||
-        "https://metalogics-chatbot-production.up.railway.app";
-
-      console.log("Registering call with backend...", { apiBaseUrl, agentId });
+      console.log("Registering call with backend...", {
+        apiBaseUrl,
+        agentId: configuredAgentId,
+      });
 
       // Register call with backend
       const response = await fetch(`${apiBaseUrl}/api/retell/register-call`, {
@@ -130,7 +182,7 @@ const VoiceButton: React.FC<VoiceButtonProps> = ({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          agentId,
+          agentId: configuredAgentId,
           sessionId: `web-${Date.now()}`,
         }),
       });
@@ -140,7 +192,17 @@ const VoiceButton: React.FC<VoiceButtonProps> = ({
         try {
           const errorData = await response.json();
           console.error("Backend registration failed:", errorData);
-          errorMessage = errorData.error || errorData.message || errorMessage;
+
+          // Provide user-friendly error messages
+          if (response.status === 404) {
+            errorMessage = "Voice agent not found";
+          } else if (response.status === 401 || response.status === 403) {
+            errorMessage = "Voice service authentication failed";
+          } else if (response.status === 503) {
+            errorMessage = "Voice service temporarily unavailable";
+          } else {
+            errorMessage = errorData.error || errorData.message || errorMessage;
+          }
         } catch {
           const errorText = await response.text();
           console.error("Backend registration failed:", errorText);
@@ -153,7 +215,7 @@ const VoiceButton: React.FC<VoiceButtonProps> = ({
       console.log("Call registered successfully:", { callId: data.callId });
 
       if (!data.success || !data.accessToken) {
-        throw new Error("Invalid response from server");
+        throw new Error("Invalid response from voice service");
       }
 
       // Start the call with Retell
@@ -166,7 +228,9 @@ const VoiceButton: React.FC<VoiceButtonProps> = ({
       console.log("Retell call started successfully");
     } catch (err) {
       console.error("Error starting call:", err);
-      setError(err instanceof Error ? err.message : "Failed to start call");
+      setError(
+        err instanceof Error ? err.message : "Failed to start voice call"
+      );
       setIsConnecting(false);
     }
   };
@@ -177,12 +241,41 @@ const VoiceButton: React.FC<VoiceButtonProps> = ({
     setIsConnecting(false);
   };
 
+  // Don't render if not configured (unless we're still checking)
+  if (isConfigured === false) {
+    return null; // Hide the button if voice is not configured
+  }
+
+  // Show loading state while checking configuration
+  if (isConfigured === null) {
+    return (
+      <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-600 text-white opacity-50">
+        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          />
+        </svg>
+        <span className="text-sm">Checking voice...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center gap-2">
       <button
         type="button"
         onClick={isCallActive ? stopCall : startCall}
-        disabled={isConnecting || disabled}
+        disabled={isConnecting || disabled || !isConfigured}
         className={`relative flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 font-medium ${
           isCallActive
             ? "bg-red-600 hover:bg-red-700 animate-pulse"
