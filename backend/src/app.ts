@@ -130,6 +130,61 @@ export const createApp = (
   app.use("/api/retell", retellRoutes);
   app.use("/api/widget", widgetRoutes);
 
+  // Add a simple API test endpoint that bypasses complex middleware
+  app.get("/api/test", (req: Request, res: Response) => {
+    res.json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      message: "API is responding",
+    });
+  });
+
+  // Add a simple available slots endpoint for testing
+  app.get("/api/slots-simple", (req: Request, res: Response) => {
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + 3);
+
+    // Generate basic slots without database queries
+    const slots = [];
+    const current = new Date(startDate);
+
+    while (current <= endDate && slots.length < 10) {
+      if (current.getDay() >= 1 && current.getDay() <= 5) {
+        // Weekdays only
+        for (let hour = 9; hour < 17; hour += 2) {
+          // 9 AM to 5 PM, every 2 hours
+          const slotStart = new Date(current);
+          slotStart.setHours(hour, 0, 0, 0);
+
+          if (slotStart > new Date()) {
+            // Only future slots
+            const slotEnd = new Date(slotStart.getTime() + 30 * 60 * 1000);
+            slots.push({
+              startTime: slotStart.toISOString(),
+              endTime: slotEnd.toISOString(),
+              duration: 30,
+            });
+          }
+        }
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    res.json({
+      success: true,
+      data: {
+        slots,
+        businessHours: {
+          daysOfWeek: [1, 2, 3, 4, 5],
+          startHour: 9,
+          endHour: 17,
+          timeZone: "America/New_York",
+        },
+      },
+    });
+  });
+
   logger.info("Routes mounted successfully", {
     bookingRoutes: "/api/bookings",
     availableSlotsRoutes: "/api/bookings/available-slots",
