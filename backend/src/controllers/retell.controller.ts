@@ -392,9 +392,12 @@ export class RetellController {
    * Health check for Retell integration
    */
   healthCheck = async (_req: Request, res: Response): Promise<void> => {
+    const isConfigured = this.retellService !== null;
+
     res.json({
       status: "ok",
       service: "retell-integration",
+      configured: isConfigured,
       timestamp: new Date().toISOString(),
     });
   };
