@@ -5,13 +5,20 @@ import { BookingService } from "../services/booking.service";
 import { logger } from "../utils/logger";
 
 export class RetellController {
-  private retellService: RetellService;
+  private retellService: RetellService | null = null;
 
   constructor(
     private conversationService: ConversationService,
     private bookingService: BookingService
   ) {
-    this.retellService = new RetellService();
+    try {
+      this.retellService = new RetellService();
+    } catch (error) {
+      logger.warn("Retell service initialization failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      this.retellService = null;
+    }
   }
 
   /**
@@ -30,6 +37,17 @@ export class RetellController {
       }
 
       logger.info("Registering Retell call", { agentId, sessionId });
+
+      // Check if Retell is properly configured
+      if (!this.retellService) {
+        logger.error("Retell service not initialized");
+        res.status(503).json({
+          success: false,
+          error: "Retell service not available",
+          details: "Voice integration is not configured",
+        });
+        return;
+      }
 
       // Register call with Retell SDK
       const response = await this.retellService.createWebCall(agentId, {
@@ -52,9 +70,24 @@ export class RetellController {
         agentId: req.body.agentId,
       });
 
-      res.status(500).json({
+      // Provide more specific error messages
+      let statusCode = 500;
+      let userMessage = "Failed to register call";
+
+      if (errorMessage.includes("404")) {
+        statusCode = 404;
+        userMessage = "Agent not found or Retell API key invalid";
+      } else if (errorMessage.includes("401") || errorMessage.includes("403")) {
+        statusCode = 401;
+        userMessage = "Retell API authentication failed";
+      } else if (errorMessage.includes("RETELL_API_KEY")) {
+        statusCode = 503;
+        userMessage = "Voice integration not configured";
+      }
+
+      res.status(statusCode).json({
         success: false,
-        error: "Failed to register call",
+        error: userMessage,
         details: errorMessage, // Include details for debugging
       });
     }

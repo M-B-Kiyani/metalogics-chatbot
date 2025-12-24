@@ -7,27 +7,50 @@ import { logger } from "../utils/logger";
  * Handles all interactions with Retell AI SDK
  */
 export class RetellService {
-  private client: Retell;
+  private client: Retell | null = null;
+  private isConfigured: boolean = false;
 
   constructor() {
-    if (!config.retell.apiKey) {
-      throw new Error("RETELL_API_KEY is not configured");
+    try {
+      if (!config.retell.apiKey || !config.retell.enabled) {
+        logger.warn("Retell integration is disabled or not configured", {
+          enabled: config.retell.enabled,
+          hasApiKey: !!config.retell.apiKey,
+        });
+        return;
+      }
+
+      // Initialize Retell SDK
+      this.client = new Retell({
+        apiKey: config.retell.apiKey,
+      });
+
+      this.isConfigured = true;
+      logger.info("Retell SDK initialized successfully");
+    } catch (error) {
+      logger.error("Failed to initialize Retell SDK", {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
+  }
 
-    // Initialize Retell SDK
-    this.client = new Retell({
-      apiKey: config.retell.apiKey,
-    });
-
-    logger.info("Retell SDK initialized successfully");
+  /**
+   * Check if Retell is properly configured
+   */
+  private ensureConfigured(): void {
+    if (!this.isConfigured || !this.client) {
+      throw new Error("Retell integration is not configured or disabled");
+    }
   }
 
   /**
    * Create a new web call
    */
   async createWebCall(agentId: string, metadata?: Record<string, any>) {
+    this.ensureConfigured();
+
     try {
-      const response = await this.client.call.createWebCall({
+      const response = await this.client!.call.createWebCall({
         agent_id: agentId,
         metadata,
       });
