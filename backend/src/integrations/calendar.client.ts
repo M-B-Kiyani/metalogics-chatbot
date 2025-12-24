@@ -178,7 +178,20 @@ export class CalendarClient {
         keyData = JSON.parse(keyFileContent);
       } else if (keyContent) {
         // Parse service account key from environment variable
-        keyData = JSON.parse(keyContent);
+        try {
+          keyData = JSON.parse(keyContent);
+        } catch (parseError) {
+          logger.error("Failed to parse Google service account key JSON", {
+            error:
+              parseError instanceof Error
+                ? parseError.message
+                : String(parseError),
+            keyContentLength: keyContent.length,
+          });
+          throw new CalendarAuthError(
+            "Invalid Google service account key JSON format"
+          );
+        }
       } else {
         throw new CalendarAuthError(
           "Google Calendar service account key not configured. Set either GOOGLE_SERVICE_ACCOUNT_KEY_PATH or GOOGLE_SERVICE_ACCOUNT_KEY"
@@ -291,7 +304,10 @@ export class CalendarClient {
 
       // Map Google Calendar events to our CalendarEvent interface
       return events
-        .filter((event: calendar_v3.Schema$Event) => event.start?.dateTime && event.end?.dateTime)
+        .filter(
+          (event: calendar_v3.Schema$Event) =>
+            event.start?.dateTime && event.end?.dateTime
+        )
         .map((event: calendar_v3.Schema$Event) => ({
           id: event.id!,
           summary: event.summary || "Untitled Event",
@@ -304,10 +320,12 @@ export class CalendarClient {
             dateTime: event.end!.dateTime!,
             timeZone: event.end!.timeZone || config.googleCalendar.timeZone,
           },
-          attendees: event.attendees?.map((attendee: calendar_v3.Schema$EventAttendee) => ({
-            email: attendee.email!,
-            responseStatus: attendee.responseStatus || undefined,
-          })),
+          attendees: event.attendees?.map(
+            (attendee: calendar_v3.Schema$EventAttendee) => ({
+              email: attendee.email!,
+              responseStatus: attendee.responseStatus || undefined,
+            })
+          ),
           status:
             (event.status as "confirmed" | "tentative" | "cancelled") ||
             "confirmed",
@@ -416,10 +434,12 @@ export class CalendarClient {
           timeZone:
             createdEvent.end!.timeZone || config.googleCalendar.timeZone,
         },
-        attendees: createdEvent.attendees?.map((attendee: calendar_v3.Schema$EventAttendee) => ({
-          email: attendee.email!,
-          responseStatus: attendee.responseStatus || undefined,
-        })),
+        attendees: createdEvent.attendees?.map(
+          (attendee: calendar_v3.Schema$EventAttendee) => ({
+            email: attendee.email!,
+            responseStatus: attendee.responseStatus || undefined,
+          })
+        ),
         status:
           (createdEvent.status as "confirmed" | "tentative" | "cancelled") ||
           "confirmed",
@@ -549,10 +569,12 @@ export class CalendarClient {
           dateTime: updated.end!.dateTime!,
           timeZone: updated.end!.timeZone || config.googleCalendar.timeZone,
         },
-        attendees: updated.attendees?.map((attendee: calendar_v3.Schema$EventAttendee) => ({
-          email: attendee.email!,
-          responseStatus: attendee.responseStatus || undefined,
-        })),
+        attendees: updated.attendees?.map(
+          (attendee: calendar_v3.Schema$EventAttendee) => ({
+            email: attendee.email!,
+            responseStatus: attendee.responseStatus || undefined,
+          })
+        ),
         status:
           (updated.status as "confirmed" | "tentative" | "cancelled") ||
           "confirmed",

@@ -261,6 +261,7 @@ Be warm and personable - you're having a conversation, not reading a script.
 export class GeminiService {
   private ai: GoogleGenAI | null = null;
   private sessions: Map<string, Chat> = new Map();
+  private initialized: boolean = false;
 
   constructor() {
     const apiKey = config.gemini.apiKey;
@@ -272,17 +273,28 @@ export class GeminiService {
 
     try {
       this.ai = new GoogleGenAI({ apiKey });
+      this.initialized = true;
       logger.info("Gemini service initialized successfully");
     } catch (error) {
-      logger.error("Failed to initialize Gemini service", { error });
+      logger.error("Failed to initialize Gemini service", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      this.initialized = false;
     }
+  }
+
+  /**
+   * Check if service is properly initialized
+   */
+  isInitialized(): boolean {
+    return this.initialized && this.ai !== null;
   }
 
   /**
    * Get or create a chat session for a user
    */
   getSession(sessionId: string): Chat | null {
-    if (!this.ai) {
+    if (!this.isInitialized()) {
       logger.error("Gemini AI not initialized");
       return null;
     }
@@ -294,7 +306,7 @@ export class GeminiService {
 
     // Create new session
     try {
-      const chat = this.ai.chats.create({
+      const chat = this.ai!.chats.create({
         model: "gemini-2.0-flash-exp",
         config: {
           systemInstruction: SYSTEM_PROMPT,
@@ -310,7 +322,7 @@ export class GeminiService {
       return chat;
     } catch (error) {
       logger.error("Failed to create Gemini chat session", {
-        error,
+        error: error instanceof Error ? error.message : String(error),
         sessionId,
       });
       return null;
@@ -412,7 +424,7 @@ export class GeminiService {
    * Check if service is available
    */
   isAvailable(): boolean {
-    return this.ai !== null;
+    return this.isInitialized();
   }
 }
 

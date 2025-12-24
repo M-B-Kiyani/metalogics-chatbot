@@ -27,7 +27,42 @@ Your application is missing essential API keys, which is causing:
 - Backend: `backend/.env` → `GEMINI_API_KEY=AIza...`
 - Frontend: `frontend/.env` → `VITE_GEMINI_API_KEY=AIza...`
 
-### 2. Retell AI Credentials (Optional - for Voice)
+### 2. Google OAuth Credentials (Required for Authentication)
+
+**What it's for**: Enables user authentication and Google Calendar integration
+
+**How to get it**:
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing one
+3. Enable the following APIs:
+   - Google Calendar API
+   - Google People API (if using contacts)
+4. Go to "Credentials" → "Create Credentials" → "OAuth 2.0 Client IDs"
+5. Configure OAuth consent screen first if prompted
+6. Set application type to "Web application"
+7. Add authorized JavaScript origins:
+   - `http://localhost:3000` (development)
+   - `https://yourdomain.com` (production)
+8. Add authorized redirect URIs:
+   - `http://localhost:3000/auth/callback` (development)
+   - `https://yourdomain.com/auth/callback` (production)
+9. Copy the Client ID and Client Secret
+
+**Where to add it**:
+
+- Backend: `backend/.env` →
+  ```
+  GOOGLE_CLIENT_ID=846039428651-vfs8p7a595l4npmmir3rt7q2l03bnmm9.apps.googleusercontent.com
+  GOOGLE_CLIENT_SECRET=your_google_client_secret
+  GOOGLE_REDIRECT_URI=http://localhost:3000/auth/callback
+  ```
+- Frontend: `frontend/.env` →
+  ```
+  VITE_GOOGLE_CLIENT_ID=your_google_client_id
+  ```
+
+### 3. Retell AI Credentials (Optional - for Voice)
 
 **What it's for**: Enables voice calling functionality
 
@@ -76,7 +111,25 @@ VITE_GEMINI_API_KEY=
 VITE_GEMINI_API_KEY=AIzaSyYourActualKeyHere
 ```
 
-### Step 2: Add Retell Credentials (Optional)
+### Step 2: Add Google OAuth Credentials (Required)
+
+1. **Backend** - Edit `backend/.env`:
+
+```bash
+# Add these lines:
+GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+GOOGLE_REDIRECT_URI=http://localhost:3000/auth/callback
+```
+
+2. **Frontend** - Edit `frontend/.env`:
+
+```bash
+# Add this line:
+VITE_GOOGLE_CLIENT_ID=your_google_client_id_here
+```
+
+### Step 3: Add Retell Credentials (Optional)
 
 If you want voice functionality:
 
@@ -105,7 +158,7 @@ VITE_RETELL_API_KEY=your_retell_api_key_here
 VITE_RETELL_AGENT_ID=your_retell_agent_id_here
 ```
 
-### Step 3: Restart Services
+### Step 4: Restart Services
 
 After adding the API keys:
 
@@ -114,6 +167,13 @@ After adding the API keys:
 3. **Clear browser cache** and refresh the page
 
 ## Testing
+
+### Test Google Authentication
+
+1. Open the application
+2. Look for "Sign in with Google" button
+3. Click it and complete OAuth flow
+4. You should be redirected back with authentication
 
 ### Test Chat (Gemini)
 
@@ -132,14 +192,16 @@ After adding the API keys:
 Based on your environment files:
 
 - ❌ **Gemini API Key**: Not configured (required for chat)
+- ❌ **Google OAuth**: Not configured (required for authentication)
 - ❌ **Retell API Key**: Not configured (optional for voice)
 - ❌ **Retell Agent ID**: Not configured (optional for voice)
 
 ## Need Help?
 
-1. **Gemini API Issues**: Check [Google AI Studio documentation](https://ai.google.dev/docs)
-2. **Retell AI Issues**: Check [Retell AI documentation](https://docs.retellai.com/)
-3. **Still having problems**: Check the browser console for specific error messages
+1. **Google OAuth Issues**: Check [Google Cloud Console documentation](https://cloud.google.com/docs/authentication)
+2. **Gemini API Issues**: Check [Google AI Studio documentation](https://ai.google.dev/docs)
+3. **Retell AI Issues**: Check [Retell AI documentation](https://docs.retellai.com/)
+4. **Still having problems**: Check the browser console for specific error messages
 
 ## Security Notes
 

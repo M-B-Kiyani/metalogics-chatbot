@@ -1,12 +1,9 @@
+
 import { config } from "../src/config";
 
-console.log("\n=== Google Calendar Configuration ===");
-console.log("Enabled:", config.googleCalendar.enabled);
-console.log(
-  "Service Account Email:",
-  config.googleCalendar.serviceAccountEmail
-);
-console.log("Calendar ID:", config.googleCalendar.calendarId);
-console.log("Timezone:", config.googleCalendar.timeZone);
-console.log("Key Path:", config.googleCalendar.serviceAccountKeyPath);
-console.log("=====================================\n");
+console.log("Checking Google Calendar Configuration...");
+console.log("GOOGLE_CALENDAR_ENABLED:", config.googleCalendar.enabled);
+console.log("GOOGLE_SERVICE_ACCOUNT_KEY_PATH is set:", !!config.googleCalendar.serviceAccountKeyPath);
+console.log("GOOGLE_SERVICE_ACCOUNT_KEY_PATH value:", config.googleCalendar.serviceAccountKeyPath ? `'${config.googleCalendar.serviceAccountKeyPath}'` : "<empty>");
+console.log("GOOGLE_SERVICE_ACCOUNT_KEY (content) is set:", !!config.googleCalendar.serviceAccountKey);
+console.log("GOOGLE_SERVICE_ACCOUNT_KEY (content) length:", config.googleCalendar.serviceAccountKey ? config.googleCalendar.serviceAccountKey.length : 0);

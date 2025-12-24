@@ -283,9 +283,15 @@ const envSchema = z.object({
     .string()
     .default("false")
     .transform((val) => val === "true"),
-  GOOGLE_SERVICE_ACCOUNT_EMAIL: z.string().optional(),
+  GOOGLE_SERVICE_ACCOUNT_EMAIL: z
+    .string()
+    .min(1, "GOOGLE_SERVICE_ACCOUNT_EMAIL is required when calendar is enabled")
+    .optional(),
   GOOGLE_SERVICE_ACCOUNT_KEY_PATH: z.string().optional(),
-  GOOGLE_SERVICE_ACCOUNT_KEY: z.string().optional(), // JSON content as string
+  GOOGLE_SERVICE_ACCOUNT_KEY: z
+    .string()
+    .min(1, "GOOGLE_SERVICE_ACCOUNT_KEY is required when calendar is enabled")
+    .optional(),
   GOOGLE_CALENDAR_ID: z.string().default("primary"),
   GOOGLE_CALENDAR_TIMEZONE: z.string().default("Europe/London"),
   GOOGLE_CALENDAR_RETRY_ATTEMPTS: z
@@ -302,7 +308,10 @@ const envSchema = z.object({
     .string()
     .default("false")
     .transform((val) => val === "true"),
-  HUBSPOT_ACCESS_TOKEN: z.string().optional(),
+  HUBSPOT_ACCESS_TOKEN: z
+    .string()
+    .min(1, "HUBSPOT_ACCESS_TOKEN is required when HubSpot is enabled")
+    .optional(),
   HUBSPOT_RETRY_ATTEMPTS: z
     .string()
     .default("3")
@@ -313,15 +322,20 @@ const envSchema = z.object({
     .transform((val) => parseInt(val, 10)),
 
   // Retell AI Voice Integration
-  RETELL_API_KEY: z.string().optional(),
-  RETELL_AGENT_ID: z.string().optional(),
+  RETELL_API_KEY: z.string().min(1, "RETELL_API_KEY is required when enabled"),
+  RETELL_AGENT_ID: z
+    .string()
+    .min(1, "RETELL_AGENT_ID is required when enabled"),
   RETELL_LLM_ID: z.string().optional(),
-  RETELL_ENABLED: z.string().optional(),
+  RETELL_ENABLED: z
+    .string()
+    .default("true")
+    .transform((val) => val === "true"),
   Custom_LLM_URL: z.string().optional(),
   Agent_Level_Webhook_URL: z.string().optional(),
 
   // Gemini AI
-  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_API_KEY: z.string().min(1, "GEMINI_API_KEY is required"),
 
   // Booking Rules
   MAX_BOOKINGS_PER_EMAIL: z
@@ -361,7 +375,37 @@ const envSchema = z.object({
  */
 function validateEnv(): z.infer<typeof envSchema> {
   try {
-    return envSchema.parse(process.env);
+    const parsed = envSchema.parse(process.env);
+
+    // Additional conditional validation
+    if (parsed.GOOGLE_CALENDAR_ENABLED) {
+      if (
+        !parsed.GOOGLE_SERVICE_ACCOUNT_EMAIL ||
+        !parsed.GOOGLE_SERVICE_ACCOUNT_KEY
+      ) {
+        throw new Error(
+          "Google Calendar is enabled but missing required credentials (GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_SERVICE_ACCOUNT_KEY)"
+        );
+      }
+    }
+
+    if (parsed.HUBSPOT_ENABLED) {
+      if (!parsed.HUBSPOT_ACCESS_TOKEN) {
+        throw new Error(
+          "HubSpot is enabled but missing required HUBSPOT_ACCESS_TOKEN"
+        );
+      }
+    }
+
+    if (parsed.RETELL_ENABLED) {
+      if (!parsed.RETELL_API_KEY || !parsed.RETELL_AGENT_ID) {
+        throw new Error(
+          "Retell is enabled but missing required credentials (RETELL_API_KEY and RETELL_AGENT_ID)"
+        );
+      }
+    }
+
+    return parsed;
   } catch (error) {
     if (error instanceof z.ZodError) {
       const errorMessages = error.issues.map((err: z.ZodIssue) => {
@@ -380,6 +424,13 @@ function validateEnv(): z.infer<typeof envSchema> {
 
       process.exit(1);
     }
+
+    if (error instanceof Error) {
+      console.error("❌ Configuration validation failed:");
+      console.error(`   ${error.message}\n`);
+      process.exit(1);
+    }
+
     throw error;
   }
 }
@@ -526,7 +577,7 @@ function buildRetellConfig(): RetellConfig {
     apiKey: env.RETELL_API_KEY || "",
     agentId: env.RETELL_AGENT_ID || "",
     llmId: env.RETELL_LLM_ID,
-    enabled: env.RETELL_ENABLED === "true",
+    enabled: env.RETELL_ENABLED,
     customLlmUrl: env.Custom_LLM_URL,
     webhookUrl: env.Agent_Level_Webhook_URL,
   };
